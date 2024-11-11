@@ -2312,16 +2312,22 @@ void lcModel::AddPiece()
 
 void lcModel::AddPiece(lcPiece* Piece)
 {
-	for (size_t PieceIndex = 0; PieceIndex < mPieces.size(); PieceIndex++)
-	{
-		if (mPieces[PieceIndex]->GetStepShow() > Piece->GetStepShow())
-		{
-			InsertPiece(Piece, PieceIndex);
-			return;
-		}
-	}
+    if(mPieces.size() > 0 && Piece->GetStepShow() >= mPieces[mPieces.size() - 1]->GetStepShow()) 
+    {
+               InsertPiece(Piece, mPieces.size());
+    }
+    else {
+        for (size_t PieceIndex = 0; PieceIndex < mPieces.size(); PieceIndex++)
+        {
+            if (mPieces[PieceIndex]->GetStepShow() > Piece->GetStepShow())
+            {
+                InsertPiece(Piece, PieceIndex);
+                return;
+            }
+        }
 
-	InsertPiece(Piece, mPieces.size());
+        InsertPiece(Piece, mPieces.size());
+    }
 }
 
 void lcModel::InsertPiece(lcPiece* Piece, size_t Index)
