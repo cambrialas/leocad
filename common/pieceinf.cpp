@@ -14,6 +14,7 @@
 #include "lc_traintrack.h"
 #include "lc_file.h"
 #include <locale.h>
+#include <iostream>
 
 PieceInfo::PieceInfo()
 {
@@ -85,7 +86,28 @@ void PieceInfo::SetModel(lcModel* Model, bool UpdateMesh, Project* CurrentProjec
 		PieceFile.Seek(0, SEEK_SET);
 
 		lcMeshLoader MeshLoader(MeshData, true, CurrentProject, SearchProjectFolder);
-		const bool Ret = MeshLoader.LoadMesh(PieceFile, LC_MESHDATA_SHARED);
+		
+        using std::chrono::high_resolution_clock;
+        using std::chrono::duration_cast;
+        using std::chrono::duration;
+        using std::chrono::milliseconds;
+
+        auto t1 = high_resolution_clock::now();
+
+        const bool Ret = MeshLoader.LoadMesh(PieceFile, LC_MESHDATA_SHARED);
+
+        auto t2 = high_resolution_clock::now();
+
+        /* Getting number of milliseconds as an integer. */
+        auto ms_int = duration_cast<milliseconds>(t2 - t1);
+
+        /* Getting number of milliseconds as a double. */
+        duration<double, std::milli> ms_double = t2 - t1;
+
+        std::cout << "pieceinf.cpp:106 MeshLoader.LoadMesh:" << ms_int.count() << "ms\n";
+        
+        
+        
 
 		if (Ret && !MeshData.IsEmpty())
 			SetMesh(MeshData.CreateMesh());

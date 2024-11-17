@@ -20,6 +20,8 @@
 #include <zlib.h>
 #include <QtConcurrent>
 
+#include <iostream>
+
 #if MAX_MEM_LEVEL >= 8
 #  define DEF_MEM_LEVEL 8
 #else
@@ -1623,7 +1625,8 @@ bool lcPiecesLibrary::IsPrimitive(const char* Name) const
 
 lcLibraryPrimitive* lcPiecesLibrary::FindPrimitive(const char* Name) const
 {
-	for (const std::unique_ptr<lcLibrarySource>& Source : mSources)
+	std::cout << "lcPiecesLibrary::FindPrimitive mSources.size(): " << mSources.size() << "\n";
+    for (const std::unique_ptr<lcLibrarySource>& Source : mSources)
 	{
 		const auto PrimitiveIt = Source->Primitives.find(Name);
 
