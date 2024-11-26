@@ -435,7 +435,7 @@ void lcView::UpdatePiecePreview()
 		if (TrainTrackInfo)
 		{
 			quint32 ConnectionIndex = mTrackToolSection & 0xff;
-			lcTrainTrackType TrainTrackType = static_cast<lcTrainTrackType>((mTrackToolSection >> 8) & 0xff);
+			int TrainTrackType = (mTrackToolSection >> 8) & 0xff;
             int toConnectionIdx = (mTrackToolSection >> 16) & 0xFF;
 
             std::tie(PreviewInfo, mPiecePreviewTransform) = TrainTrackInfo->GetPieceInsertPosition(Piece, ConnectionIndex, TrainTrackType, toConnectionIdx);

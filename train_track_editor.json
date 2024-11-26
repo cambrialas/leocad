@@ -1,0 +1,100 @@
+{
+    "track_sections": [
+        {
+            "filename": "2861c04.dat",
+            "connections": [
+                {                    
+                    "transform_x": 320,
+                    "transform_y": 0,
+                    "rotate_z": 0
+                },
+                {
+                    "transform_x": 333.85324096679688,
+                    "transform_y": 259.10357666015625,
+                    "rotate_z": 22.5
+                },
+                {                    
+                    "transform_x": -320,
+                    "transform_y": 0,
+                    "rotate_z": 180
+                }
+            ]
+        },
+        {
+            "filename": "32087.dat",
+            "connections": [
+                {                    
+                    "transform_x": 160,
+                    "transform_y": 0,
+                    "rotate_z": 0
+                },
+                {                    
+                    "transform_x": 0,
+                    "transform_y": 160,
+                    "rotate_z": 90
+                },
+                {                    
+                    "transform_x": -160,
+                    "transform_y": 0,
+                    "rotate_z": 180
+                },
+                {                    
+                    "transform_x": 0,
+                    "transform_y": -160,
+                    "rotate_z": -90
+                }
+            ]
+        },
+        {
+            "filename": "74746.dat",
+            "connections": [
+                {                    
+                    "transform_x": 160,
+                    "transform_y": 0,
+                    "rotate_z": 0
+                },
+                {
+                    "transform_x": -160,
+                    "transform_y": 0,
+                    "rotate_z": -180
+                }
+            ]
+        },
+        {
+            "filename": "74747.dat",
+            "connections": [
+                {                    
+                    "transform_x": 156.072265625,
+                    "transform_y": -15.371826171875,
+                    "rotate_z": -11.25
+                },
+                {
+                    "transform_x": -156.072265625,
+                    "transform_y": -15.371826171875,
+                    "rotate_z": -168.75
+                }
+            ]
+        },            
+        {
+            "filename": "2859c04.dat",
+            "connections": [
+                {                    
+                    "transform_x": 320,
+                    "transform_y": 0,
+                    "rotate_z": 0
+                },
+                {
+                    "transform_x": 333.85324096679688,
+                    "transform_y": -259.10357666015625,
+                    "rotate_z": -22.5
+                },
+                {                    
+                    "transform_x": -320,
+                    "transform_y": 0,
+                    "rotate_z": 180
+                }
+            ]
+        }
+    ]
+    
+}
