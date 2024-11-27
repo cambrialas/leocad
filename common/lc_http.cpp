@@ -86,6 +86,14 @@ lcHttpReply* lcHttpManager::lcHttpManager::DownloadFile(const QString& Url)
 
 void lcHttpManager::Finished(QNetworkReply* Reply)
 {
+    QVariant possibleRedirectUrl = Reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
+
+    if(possibleRedirectUrl.isValid())
+    {
+        get(QNetworkRequest(possibleRedirectUrl.toUrl()));
+        return;
+    }
+
 	emit DownloadFinished((lcHttpReply*)Reply);
 }
 
