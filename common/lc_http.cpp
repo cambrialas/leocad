@@ -1,6 +1,6 @@
 #include "lc_global.h"
 #include "lc_http.h"
-
+#include <iostream>
 #ifdef Q_OS_WIN
 
 #include <windows.h>
@@ -81,14 +81,53 @@ lcHttpManager::lcHttpManager(QObject* Owner)
 
 lcHttpReply* lcHttpManager::lcHttpManager::DownloadFile(const QString& Url)
 {
+    std::cout << "DownloadFile!" << Url.toStdString() << "\n";
     QNetworkRequest req = QNetworkRequest(QUrl(Url));
+    //req.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true); // Deprecated from Qt5.9, use QNetworkRequest::RedirectPolicyAttribute instead.
     req.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
-
+    
 	return (lcHttpReply*)get(req);
 }
 
 void lcHttpManager::Finished(QNetworkReply* Reply)
 {
+    std::cout << " ------------------------- DownloadFile! Finished -------------------------\n";
+    std::cout << "Error code: " << Reply->error() << "\n";
+    std::cout << "Data buffer size: " << Reply->readBufferSize() << "\n";
+    std::cout << "Url: " << Reply->url().toString().toStdString() << "\n";
+
+    QVariant statusCode = Reply->attribute( QNetworkRequest::HttpStatusCodeAttribute );
+    std::cout << "Status code: " << statusCode.toInt() << "\n";
+
+    QList headerList = Reply->rawHeaderPairs();
+    for(int i = 0; i < headerList.size(); i++) {
+        QNetworkReply::RawHeaderPair headerPair = headerList.at(i);        
+        std::cout << "Header: " <<  headerPair.first.toStdString() << " = " << headerPair.second.toStdString() << "\n";  
+    }
+
+    QVariant possibleRedirectUrl = Reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
+    
+    if(possibleRedirectUrl.isValid()) {
+        QUrl qurl = possibleRedirectUrl.toUrl();
+        std::cout << "Redirect url: " << qurl.toString().toStdString() << "\n";
+    }
+    else {
+        std::cout << "No redirect!\n";
+    }
+
+    /*QByteArray mData = Reply->readAll();
+    std::cout << "\nContent:\n";
+    std::cout << mData.toStdString() << "\n";*/
+   
+   
+    /*QVariant possibleRedirectUrl = Reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
+
+    if(possibleRedirectUrl.isValid())
+    {
+        get(QNetworkRequest(possibleRedirectUrl.toUrl()));
+        return;
+    }*/
+
 	emit DownloadFinished((lcHttpReply*)Reply);
 }
 
