@@ -1,11 +1,13 @@
 #pragma once
 
 #include "lc_library.h"
+#include "piece.h"
 #include <vector>
 #include <map>
 #include <string>
 #include <memory>
 
+class TrainTrackSystem;
 
 enum LC_TTS_TYPES {
     LC_TTS_STRAIGHT,
@@ -24,6 +26,17 @@ class TrainTrackConnectionPoint {
 };
 
 
+struct DirectionFromConnectionPoint {
+    int SplineNo;
+    bool direction; // 0 - Spline forward, 1 - Spline backwards    
+};
+
+struct Spline {
+    lcVector2 location;
+    double rotation;
+};
+
+
 class TrainTrackType {
     public:
         
@@ -34,7 +47,19 @@ class TrainTrackType {
         //lcArray<TrainTrackConnectionPoint *>& GetConnections();
         std::vector<TrainTrackConnectionPoint *>& GetConnections();
         PieceInfo* pieceInfo;
-        int GetNoOfConnections();        
+        int GetNoOfConnections();
+
+
+        void GenerateSplineAndDirection();
+
+        std::vector<std::vector<struct Spline>> vectorSplines; // vector of splines
+
+
+        std::vector<struct DirectionFromConnectionPoint> vectorConnectionpointDirection;
+
+
+        enum LC_TTS_TYPES trackTypeId;
+
     private:
         char const* filename;
         //lcArray<TrainTrackConnectionPoint *> connectionPoints;
@@ -44,15 +69,49 @@ class TrainTrackType {
 
 class TrainTrackSection {
     public:
-        TrainTrackSection(TrainTrackType *trackType, enum LC_TTS_TYPES trackTypeId, lcMatrix44 location, int mCurrentStep, int mColorIndex);
+        TrainTrackSection(TrainTrackType *trackType, lcMatrix44 location, int mCurrentStep, int mColorIndex);
         lcMatrix44 GetConnectionLocation(int connectionNo);
         int GetNoOfConnections();
         int FindConnectionNumber(lcVector3 searchLocation);
+
+        int FindConnectionNumberNoTranslate(lcVector3 v3searchLocation);
+
         TrainTrackType *trackType;
-        enum LC_TTS_TYPES trackTypeId;        
+        
         lcMatrix44 location;
         int mCurrentStep;
         int mColorIndex;
+        
+};
+
+
+class TrainLocomotive
+{
+    public:
+
+        TrainLocomotive(TrainTrackSystem* trackSystem);
+
+        TrainTrackSystem* mTrackSystem;
+
+        lcVector3 findOtherEndOfCurrentSpline();
+        
+        void IncrementTrainLocation();
+
+        void GetPieces(std::vector<lcPiece*>& pieces);
+
+        struct TrainPieces {
+            lcPiece *pieceWheelBogie[2];
+            lcPiece *pieceTrainBase;
+        } trainPieces;
+
+        struct TrainLocation {
+            TrainTrackSection *section;	
+            struct DirectionFromConnectionPoint splineAndDirection;	
+            int pointNo;
+        } trainLocation;
+
+        int mCurrentStep;
+
 };
 
 
@@ -69,6 +128,8 @@ class TrainTrackSystem
         void addTrackSection(TrainTrackSection* fromTrackSection, int fromTrackSectionConnectionIdx, enum LC_TTS_TYPES toTrackType, int toTrackTypeConnectionIdx);
         bool deleteTrackSection(lcPiece* piece);
 
+        TrainTrackSection* findSectionConnectedTo(TrainTrackSection* fromTrackSection, int fromTrackSectionConnectionIdx, int& toTrackSectionConnectionIdx);
+
         //lcArray<PieceInfo*> getTrackTypes();
         std::vector<PieceInfo *> getTrackTypes();
 
@@ -83,7 +144,8 @@ class TrainTrackSystem
         lcModel* GetModel();
         void SetModel();
         LC_TTS_TYPES findTrackTypeByString(const char *tracktypeName); 
-    private:
+
+    //private:
 
         //lcArray<TrainTrackType*> trainTrackTypes;
         std::vector<TrainTrackType *> trainTrackTypes;
@@ -98,7 +160,11 @@ class TrainTrackSystem
         std::unique_ptr<lcModel> mModel;
 
         std::map<std::string ,LC_TTS_TYPES> trackTypesByName;
-        
+
+
+        TrainLocomotive* mLocomotive;
+
+
 };
 
 

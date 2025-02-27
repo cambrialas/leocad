@@ -7,6 +7,7 @@
 #include "piece.h"
 #include "camera.h"
 #include "lc_partselectionwidget.h"
+#include <iostream>
 
 lcTrainTrackSystemDialog::lcTrainTrackSystemDialog(QWidget* Parent)
 	: QDialog(Parent), ui(new Ui::lcTrainTrackSystemDialog)
@@ -22,6 +23,7 @@ lcTrainTrackSystemDialog::lcTrainTrackSystemDialog(QWidget* Parent)
 	PreviewLayout->setContentsMargins(0, 0, 0, 0);
 
 	mTrainTrackSystem = new TrainTrackSystem();
+
 	SetInitialTrainTrackSystem();
 	mView = new lcView(lcViewType::View, mTrainTrackSystem->GetModel());
 
@@ -45,6 +47,12 @@ lcTrainTrackSystemDialog::lcTrainTrackSystemDialog(QWidget* Parent)
 
 	mView->GetCamera()->SetViewpoint(lcVector3(0.0f, 0.0f, 90.0f));
 	mView->ZoomExtents();
+
+
+	timer = new QTimer(this);
+    connect(timer, &QTimer::timeout, this, &lcTrainTrackSystemDialog::moveLocomotiveForward);
+    
+
 }
 
 
@@ -105,6 +113,7 @@ void lcTrainTrackSystemDialog::mouseRelease() {
 
 void lcTrainTrackSystemDialog::keyPressEvent(QKeyEvent *event) {
 
+	
 	if(selectedFromTrackSection == nullptr) {
 
 		lcModel* activeModel = mView->GetActiveModel();
@@ -176,6 +185,7 @@ void lcTrainTrackSystemDialog::keyPressEvent(QKeyEvent *event) {
 				updateSection = false;	
 				break;		
 			}
+
 			default: {
 				updateSection = false;
 			}
@@ -193,6 +203,22 @@ void lcTrainTrackSystemDialog::keyPressEvent(QKeyEvent *event) {
 			newSectionInserted = true;
 		}
 	}
+
+	
+	switch(event->key()) {
+		case Qt::Key_Up: {
+			
+			std::cout << "key up\n";
+
+			mTrainTrackSystem->mLocomotive->IncrementTrainLocation();
+			mTrainTrackSystem->SetModel();
+			mView->Redraw();
+
+			//timer->start(10);			
+			break;
+		}
+	}
+
 }
 
 void lcTrainTrackSystemDialog::SetInitialTrainTrackSystem() 
@@ -205,20 +231,12 @@ void lcTrainTrackSystemDialog::SetInitialTrainTrackSystem()
 }
 
 
+void lcTrainTrackSystemDialog::moveLocomotiveForward() {
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	
+	std::cout << "locomotive move forward\n";
+	mTrainTrackSystem->mLocomotive->IncrementTrainLocation();
+	mTrainTrackSystem->SetModel();
+	mView->Redraw();
+	
+}

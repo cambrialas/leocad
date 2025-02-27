@@ -30,6 +30,7 @@ public:
 public slots:
 	void mousePressOnPiece(lcPiece* piece);	
 	void mouseRelease();
+	void moveLocomotiveForward();
 
 protected:
 	
@@ -58,5 +59,7 @@ private:
 	enum LC_TTS_TYPES selectedTrackTypeId;
 
 	void SetInitialTrainTrackSystem();
+
+	QTimer *timer;
 
 };
