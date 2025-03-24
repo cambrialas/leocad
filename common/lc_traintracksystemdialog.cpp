@@ -8,6 +8,7 @@
 #include "camera.h"
 #include "lc_partselectionwidget.h"
 #include <iostream>
+#include <sys/resource.h>
 
 lcTrainTrackSystemDialog::lcTrainTrackSystemDialog(QWidget* Parent)
 	: QDialog(Parent), ui(new Ui::lcTrainTrackSystemDialog)
@@ -25,6 +26,9 @@ lcTrainTrackSystemDialog::lcTrainTrackSystemDialog(QWidget* Parent)
 	mTrainTrackSystem = new TrainTrackSystem();
 
 	SetInitialTrainTrackSystem();
+
+	mTrainTrackSystem->mLocomotive->CreateLocomotive();
+
 	mView = new lcView(lcViewType::View, mTrainTrackSystem->GetModel());
 
 	lcViewWidget* ViewWidget = new lcViewWidget(nullptr, mView);
@@ -49,11 +53,12 @@ lcTrainTrackSystemDialog::lcTrainTrackSystemDialog(QWidget* Parent)
 	mView->ZoomExtents();
 
 
-	timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, this, &lcTrainTrackSystemDialog::moveLocomotiveForward);
-    
+	//timer = new QTimer(this);
+    //connect(timer, &QTimer::timeout, this, &lcTrainTrackSystemDialog::moveLocomotiveForward);
 
 }
+
+
 
 
 lcTrainTrackSystemDialog::~lcTrainTrackSystemDialog()

@@ -558,6 +558,118 @@ inline lcVector3 lcCross(const lcVector3& a, const lcVector3& b)
 	return lcVector3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
 }
 
+inline float lcDistance(const lcVector3& p1, const lcVector3& p2) {
+    float dx = p2.x - p1.x;
+    float dy = p2.y - p1.y;
+    float dz = p2.z - p1.z;
+    return std::sqrt(dx * dx + dy * dy + dz * dz);
+}
+
+
+// Define a 2D point structure
+class Point2D {
+	public:
+		Point2D(double p_x, double p_y) {
+			x = p_x;
+			y = p_y;
+		}
+		
+		double x;
+		double y;
+};
+
+// Helper function to check if two points are approximately equal
+inline bool lcPointsEqual(const Point2D& a, const Point2D& b, double eps = 1e-9) {
+    return std::abs(a.x - b.x) < eps && std::abs(a.y - b.y) < eps;
+}
+
+
+/**
+ * Finds intersection points between a line segment and a circle
+ * @param P1 First endpoint of the line segment
+ * @param P2 Second endpoint of the line segment
+ * @param C Center of the circle
+ * @param R Radius of the circle
+ * @return Vector containing 0, 1, or 2 intersection points
+ */
+inline std::vector<Point2D> lcFindIntersectionLineCircle(const Point2D& P1, const Point2D& P2, 
+                                    const Point2D& C, double R) {
+    const double EPS = 1e-3;
+
+    // Handle degenerate case where P1 and P2 are the same point
+    if (lcPointsEqual(P1, P2, EPS)) {
+        double dist = std::sqrt((P1.x - C.x) * (P1.x - C.x) + 
+                              (P1.y - C.y) * (P1.y - C.y));
+        if (std::abs(dist - R) < EPS) {
+            return {P1};  // Point is on the circle
+        }
+        return {};  // Point is not on the circle
+    }
+
+    // Direction vector of the line segment
+    double D_x = P2.x - P1.x;
+    double D_y = P2.y - P1.y;
+
+    // Coefficients for the quadratic equation
+    double a = D_x * D_x + D_y * D_y;
+    double b = 2 * ((P1.x - C.x) * D_x + (P1.y - C.y) * D_y);
+    double c = (P1.x - C.x) * (P1.x - C.x) + 
+              (P1.y - C.y) * (P1.y - C.y) - R * R;
+
+    // Calculate discriminant
+    double delta = b * b - 4 * a * c;
+
+    // No real intersections
+    if (delta < 0) {
+        return {};
+    }
+
+    std::vector<Point2D> result;
+
+    // Tangent case (one intersection)
+    if (std::abs(delta) < EPS) {
+        double t = -b / (2 * a);
+        if (t >= 0 && t <= 1) {
+            double X = P1.x + t * D_x;
+            double Y = P1.y + t * D_y;
+            result.push_back({X, Y});
+        }
+    }
+    // Two possible intersections
+    else {
+        double sqrt_delta = std::sqrt(delta);
+        double t1 = (-b - sqrt_delta) / (2 * a);
+        double t2 = (-b + sqrt_delta) / (2 * a);
+
+        // Check first intersection
+        if (t1 >= 0 && t1 <= 1) {
+            double X = P1.x + t1 * D_x;
+            double Y = P1.y + t1 * D_y;
+            result.push_back({X, Y});
+        }
+        // Check second intersection
+        if (t2 >= 0 && t2 <= 1) {
+            double X = P1.x + t2 * D_x;
+            double Y = P1.y + t2 * D_y;
+            result.push_back({X, Y});
+        }
+    }
+
+    return result;
+}
+
+
+inline double lcGetAngle(double x1, double y1, double x2, double y2) {
+    double delta_x = x2 - x1;
+    double delta_y = y2 - y1;
+    double angle = std::atan2(delta_y, delta_x); // Returns angle in [-π, π]
+    if (angle < 0) {
+        angle += 2 * M_PI; // Adjust to [0, 2π]
+    }
+    return angle; // Angle in radians
+}
+
+
 template<>
 inline lcVector3 lcMin<lcVector3>(const lcVector3& a, const lcVector3& b)
 {

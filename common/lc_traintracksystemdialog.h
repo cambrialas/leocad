@@ -2,6 +2,7 @@
 
 #include "traintracksystem.h"
 #include "lc_partselectionwidget.h"
+#include <iostream>
 
 class lcQColorPicker;
 
@@ -48,7 +49,7 @@ protected:
 
 	
 private:
-
+		
 	lcPartSelectionListView* mPartsWidget;
 	TrainTrackSection* selectedFromTrackSection = nullptr;
 	int selectedFromConnectionNo = -1;
@@ -60,6 +61,6 @@ private:
 
 	void SetInitialTrainTrackSystem();
 
-	QTimer *timer;
+	//QTimer *timer;
 
 };

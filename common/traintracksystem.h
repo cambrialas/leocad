@@ -18,6 +18,11 @@ enum LC_TTS_TYPES {
     LC_TTS_NUMITEMS
 };
 
+enum class Direction {
+    Forward,
+    Backward
+};
+
 class TrainTrackConnectionPoint {
     public:
         TrainTrackConnectionPoint(float angle, float x, float y);
@@ -26,14 +31,48 @@ class TrainTrackConnectionPoint {
 };
 
 
-struct DirectionFromConnectionPoint {
-    int SplineNo;
-    bool direction; // 0 - Spline forward, 1 - Spline backwards    
-};
-
-struct Spline {
+struct SplineElement {
     lcVector2 location;
     double rotation;
+};
+
+
+class Spline {
+    public:
+        Spline(std::vector<struct SplineElement>* spline, int fromConnectionNo, int toConnectionNo, Direction splineDirection) {
+            mSpline = spline;
+            mFromConnectionPointNo = fromConnectionNo;
+            mToConnectionPointNo = toConnectionNo;
+            mSplineDirection = splineDirection;
+        }
+
+        lcVector2 GetLocation(int splineIdx) {
+
+            if(mSplineDirection == Direction::Backward)  //Forward
+                splineIdx = mSpline->size() - 1 - splineIdx;
+                
+            return mSpline->at(splineIdx).location;
+        
+        };
+
+        double GetRotation(int splineIdx) {
+            
+            if(mSplineDirection == Direction::Backward) {
+                splineIdx = mSpline->size() - 1 - splineIdx;
+                return mSpline->at(splineIdx).rotation + 180;
+            }
+            else {                    
+                return mSpline->at(splineIdx).rotation;
+            }        
+        };
+
+
+
+        Direction mSplineDirection; // 0 - Spline forward, 1 - Spline backwards
+
+        int mFromConnectionPointNo;
+        int mToConnectionPointNo;
+        std::vector<struct SplineElement>* mSpline;
 };
 
 
@@ -44,19 +83,14 @@ class TrainTrackType {
         void AddConnection(TrainTrackConnectionPoint *connectionPoint);        
         TrainTrackConnectionPoint *GetConnection(int index);
 
-        //lcArray<TrainTrackConnectionPoint *>& GetConnections();
         std::vector<TrainTrackConnectionPoint *>& GetConnections();
         PieceInfo* pieceInfo;
         int GetNoOfConnections();
 
-
+        void BezierLine(lcVector2* pointList, int NumberOfPoints, std::vector<struct SplineElement>* spline, int NumberOfResultPoints);
         void GenerateSplineAndDirection();
 
-        std::vector<std::vector<struct Spline>> vectorSplines; // vector of splines
-
-
-        std::vector<struct DirectionFromConnectionPoint> vectorConnectionpointDirection;
-
+        std::vector<Spline*> vectorSplines; // vector of splines
 
         enum LC_TTS_TYPES trackTypeId;
 
@@ -71,10 +105,11 @@ class TrainTrackSection {
     public:
         TrainTrackSection(TrainTrackType *trackType, lcMatrix44 location, int mCurrentStep, int mColorIndex);
         lcMatrix44 GetConnectionLocation(int connectionNo);
+
+        lcMatrix44 GetSplineLocation(int splineNo, int splineIdx); 
+        
         int GetNoOfConnections();
         int FindConnectionNumber(lcVector3 searchLocation);
-
-        int FindConnectionNumberNoTranslate(lcVector3 v3searchLocation);
 
         TrainTrackType *trackType;
         
@@ -89,15 +124,30 @@ class TrainLocomotive
 {
     public:
 
+        
+
         TrainLocomotive(TrainTrackSystem* trackSystem);
 
         TrainTrackSystem* mTrackSystem;
-
-        lcVector3 findOtherEndOfCurrentSpline();
-        
+    
+        void CreateLocomotive();
         void IncrementTrainLocation();
 
+        lcMatrix44 GetBoogieWorldPosition();
+
         void GetPieces(std::vector<lcPiece*>& pieces);
+
+        lcVector2 GetSplineLocation() {
+
+            return trainLocation.spline->GetLocation(trainLocation.splineIdx);
+
+        };
+
+        double GetSplineRotation() {
+
+            return trainLocation.spline->GetRotation(trainLocation.splineIdx);
+
+        };
 
         struct TrainPieces {
             lcPiece *pieceWheelBogie[2];
@@ -106,11 +156,17 @@ class TrainLocomotive
 
         struct TrainLocation {
             TrainTrackSection *section;	
-            struct DirectionFromConnectionPoint splineAndDirection;	
-            int pointNo;
+            Spline* spline;	
+            int splineIdx;
         } trainLocation;
 
+        lcMatrix44 mat44BogieWheel2;
+        lcMatrix44 mat44BasePlate;
+            
         int mCurrentStep;
+
+
+
 
 };
 

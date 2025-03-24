@@ -40,6 +40,54 @@ int TrainTrackType::GetNoOfConnections() {
 	return connectionPoints.size();
 }
 
+
+void TrainTrackType::BezierLine(lcVector2* pointList, int NumberOfPoints, std::vector<struct SplineElement>* spline, int NumberOfResultPoints) {
+
+    lcVector2 pointListOrders[NumberOfPoints];
+
+    double PercentStep = 1 / (double)( NumberOfResultPoints - 1 );
+    
+    for(int resultCounter=0; resultCounter < NumberOfResultPoints; resultCounter++) {
+        
+        double Percentage = ( PercentStep * resultCounter );
+		struct SplineElement splineElement;
+        //cout << resultCounter << ", percent: " << Percentage << endl;
+                
+        //Copy from paramter 'pointList to pointListOrders and calculate 
+        for(int pointNo=0;pointNo < NumberOfPoints-1; pointNo++) {
+            
+            pointListOrders[pointNo].x = pointList[pointNo].x + (( pointList[pointNo+1].x - pointList[pointNo].x ) * Percentage);
+            pointListOrders[pointNo].y = pointList[pointNo].y + (( pointList[pointNo+1].y - pointList[pointNo].y ) * Percentage);                
+            //cout << "Point no: " << pointNo << ",x: " << pointListOrders[pointNo].x << ",y: " << pointListOrders[pointNo].y << endl;    
+        }
+
+
+        for(int orders=NumberOfPoints-2;orders >= 1; orders--) {
+
+            //cout << "Orders: " << orders << endl;			
+			if(orders == 1) {
+				splineElement.rotation = LC_RTOD * lcGetAngle(pointListOrders[0].x, pointListOrders[0].y, pointListOrders[1].x , pointListOrders[1].y);
+			}
+
+            for(int pointNo = 0; pointNo < orders; pointNo++) {
+                
+                pointListOrders[pointNo].x = pointListOrders[pointNo].x + (( pointListOrders[pointNo+1].x - pointListOrders[pointNo].x ) * Percentage);
+                pointListOrders[pointNo].y = pointListOrders[pointNo].y + (( pointListOrders[pointNo+1].y - pointListOrders[pointNo].y ) * Percentage);                
+                //cout << "Point no: " << pointNo << ",x: " << pointListOrders[pointNo].x << ",y: " << pointListOrders[pointNo].y << endl;    
+            }
+            
+        }
+
+        splineElement.location.x = pointListOrders[0].x;
+        splineElement.location.y = pointListOrders[0].y;
+
+		spline->push_back(splineElement);
+
+        //cout << "Bezier point, x: " << pointListOrders[0].x << ", y: " << pointListOrders[0].y << endl << endl;                   
+    }
+}
+
+
 void TrainTrackType::GenerateSplineAndDirection() {
 
 	/*enum LC_TTS_TYPES trackTypeId
@@ -51,48 +99,38 @@ void TrainTrackType::GenerateSplineAndDirection() {
 		LC_TTS_RIGHT_BRANCH,
 		LC_TTS_NUMITEMS
 	};*/
-	std::vector<struct Spline> vectorSpline;
-
+	std::vector<struct SplineElement>* vectorSpline;
+	
+	Spline *spline;
+	
 	switch(this->trackTypeId) {
 		
 		case LC_TTS_STRAIGHT: {
 
+			vectorSpline = new std::vector<struct SplineElement>();
+
 			for(int itr = 0; itr <= 100; itr++) {
 
-				struct Spline splineElement;					
+				struct SplineElement splineElement;					
 				splineElement.location = lcVector2(-160.0 + ((320.0 / 100.0) * itr ), 0);
 			
 				splineElement.rotation = 0;
-				vectorSpline.push_back(splineElement);
+				vectorSpline->push_back(splineElement);
 
 			}
 
-			vectorSplines.push_back(vectorSpline);
+			spline = new Spline(vectorSpline, 0, 1, Direction::Backward);
+			vectorSplines.push_back(spline);
 
-			std::cout << "Spline\n";
-			for(int itr = 0; itr <= 100; itr++) {
-
-				std::cout << itr << ", " << vectorSpline[itr].location[0] << ", " << vectorSpline[itr].location[1] << "\n";
-
-			}
-			std::cout << "Spline end\n";
-
-			// Direction 
-
-			struct DirectionFromConnectionPoint directionConnPoint0;			
-			directionConnPoint0.SplineNo = 0;
-			directionConnPoint0.direction = 1;
-			vectorConnectionpointDirection.push_back(directionConnPoint0);
-
-			struct DirectionFromConnectionPoint directionConnPoint1;			
-			directionConnPoint1.SplineNo = 0;
-			directionConnPoint1.direction = 0;
-			vectorConnectionpointDirection.push_back(directionConnPoint1);
+			spline = new Spline(vectorSpline, 1, 0, Direction::Forward);
+			vectorSplines.push_back(spline);
 
 			break;
 		}
 
 		case LC_TTS_CURVED: {
+
+			vectorSpline = new std::vector<struct SplineElement>();
 
 			for(int itr = 0; itr <= 100; itr++) {
 
@@ -102,31 +140,18 @@ void TrainTrackType::GenerateSplineAndDirection() {
 				float yHalfBendOff = ((cos(LC_DTOR * degree) * 800.0f) - 800.0f);
 				
 				
-				struct Spline splineElement;
+				struct SplineElement splineElement;
 				splineElement.location = lcVector2(xHalfBendOff, yHalfBendOff);
 			
 				splineElement.rotation = -degree;
-				vectorSpline.push_back(splineElement);
+				vectorSpline->push_back(splineElement);
 			}
 
-			vectorSplines.push_back(vectorSpline);
+			spline = new Spline(vectorSpline, 0, 1, Direction::Backward);
+			vectorSplines.push_back(spline);
 
-			std::cout << "Spline\n";
-			for(int itr = 0; itr <= 100; itr++) 
-				std::cout << itr << ", " << vectorSpline[itr].location[0] << ", " << vectorSpline[itr].location[1] << "\n";
-			std::cout << "Spline end\n";
-
-			// Direction 
-
-			struct DirectionFromConnectionPoint directionConnPoint0;			
-			directionConnPoint0.SplineNo = 0;
-			directionConnPoint0.direction = 1;
-			vectorConnectionpointDirection.push_back(directionConnPoint0);
-
-			struct DirectionFromConnectionPoint directionConnPoint1;			
-			directionConnPoint1.SplineNo = 0;
-			directionConnPoint1.direction = 0;
-			vectorConnectionpointDirection.push_back(directionConnPoint1);
+			spline = new Spline(vectorSpline, 1, 0, Direction::Forward);
+			vectorSplines.push_back(spline);
 			
 			break;
 
@@ -135,62 +160,171 @@ void TrainTrackType::GenerateSplineAndDirection() {
 
 		case LC_TTS_CROSS: {
 
+			Spline* crossSplines[4];
+
+			vectorSpline = new std::vector<struct SplineElement>();
+			
 			for(int itr = 0; itr <= 100; itr++) {
 
-				struct Spline splineElement;					
+				struct SplineElement splineElement;					
 				splineElement.location = lcVector2(-160.0 + ((320.0 / 100.0) * itr ), 0);
 			
 				splineElement.rotation = 0;
-				vectorSpline.push_back(splineElement);
+				vectorSpline->push_back(splineElement);
 			}
-			vectorSplines.push_back(vectorSpline);
+			
+			spline = new Spline(vectorSpline, 2, 0, Direction::Forward);
+			crossSplines[2] = spline;
 
-			vectorSpline.clear();
+			spline = new Spline(vectorSpline, 0, 2, Direction::Backward);
+			crossSplines[0] = spline;
+
+
+			// next spline
+			vectorSpline = new std::vector<struct SplineElement>();
 
 			for(int itr = 0; itr <= 100; itr++) {
 
-				struct Spline splineElement;					
+				struct SplineElement splineElement;
 				splineElement.location = lcVector2(0, -160.0 + ((320.0 / 100.0) * itr ));
 			
 				splineElement.rotation = 90;
-				vectorSpline.push_back(splineElement);
+				vectorSpline->push_back(splineElement);
 			}
-			vectorSplines.push_back(vectorSpline);
 
-			std::cout << "Spline\n";
-			for(int itr = 0; itr <= 100; itr++) {
+			spline = new Spline(vectorSpline, 3, 1, Direction::Forward);
+			crossSplines[3] = spline;
 
-				std::cout << itr << ", " << vectorSpline[itr].location[0] << ", " << vectorSpline[itr].location[1] << "\n";
+			spline = new Spline(vectorSpline, 1, 3, Direction::Backward);
+			crossSplines[1] = spline;
 
-			}
-			std::cout << "Spline end\n";
-
-			// Direction 
-
-			struct DirectionFromConnectionPoint directionConnPoint0;			
-			directionConnPoint0.SplineNo = 0;
-			directionConnPoint0.direction = 1;
-			vectorConnectionpointDirection.push_back(directionConnPoint0);
-
-			struct DirectionFromConnectionPoint directionConnPoint1;
-			directionConnPoint1.SplineNo = 1;
-			directionConnPoint1.direction = 1;
-			vectorConnectionpointDirection.push_back(directionConnPoint1);
-						
-			struct DirectionFromConnectionPoint directionConnPoint2;
-			directionConnPoint2.SplineNo = 0;
-			directionConnPoint2.direction = 0;
-			vectorConnectionpointDirection.push_back(directionConnPoint2);
-
-			struct DirectionFromConnectionPoint directionConnPoint3;
-			directionConnPoint3.SplineNo = 1;
-			directionConnPoint3.direction = 0;
-			vectorConnectionpointDirection.push_back(directionConnPoint3);
+			vectorSplines.push_back(crossSplines[0]);
+			vectorSplines.push_back(crossSplines[1]);
+			vectorSplines.push_back(crossSplines[2]);
+			vectorSplines.push_back(crossSplines[3]);
 
 			break;
 
 		}
 
+		case LC_TTS_LEFT_BRANCH: {
+
+
+			// Connction point 0 -> 2
+
+			vectorSpline = new std::vector<struct SplineElement>();
+
+			for(int itr = 0; itr <= 200; itr++) {
+
+				struct SplineElement splineElement;					
+				splineElement.location = lcVector2(-320.0 + ((640.0 / 200.0) * itr ), 0);
+			
+				splineElement.rotation = 0;
+				vectorSpline->push_back(splineElement);
+
+			}
+
+			spline = new Spline(vectorSpline, 0, 2, Direction::Backward);
+			vectorSplines.push_back(spline);
+
+
+			// Connction point 2 -> 1 and 1 -> 2
+
+			float p0_transform_x = -320;
+			float p0_transform_y = 0;
+		
+			float p1_transform_x = 0;
+			float p1_transform_y = 0;
+		
+			float p2_transform_x = 0.4683227539;
+			float p2_transform_y = 121.0110168;
+		
+			float p3_transform_x = 333.85324096679688;
+			float p3_transform_y = 259.10357666015625;
+							
+			lcVector2 pointList[] = { 
+				lcVector2(p0_transform_x, p0_transform_y), 
+				lcVector2(p1_transform_x, p1_transform_y), 
+				lcVector2(p2_transform_x, p2_transform_y), 
+				lcVector2(p3_transform_x, p3_transform_y) 
+			};
+
+			vectorSpline = new std::vector<struct SplineElement>();
+
+			BezierLine(pointList, 4, vectorSpline, 200);
+
+			for(int itr = 0; itr < 200; itr++) {
+				std::cout << "pointListResult[" << itr << "] x: " << vectorSpline->at(itr).location.x << ", y: " << vectorSpline->at(itr).location.y << ", rotation: " << vectorSpline->at(itr).rotation << "\n";
+			}
+
+			spline = new Spline(vectorSpline, 1, 2, Direction::Backward);
+			vectorSplines.push_back(spline);
+
+			spline = new Spline(vectorSpline, 2, 1, Direction::Forward);
+			vectorSplines.push_back(spline);
+
+
+			break;
+		}
+
+		case LC_TTS_RIGHT_BRANCH: {
+
+
+			// Connction point 0 -> 1
+
+			vectorSpline = new std::vector<struct SplineElement>();
+
+			for(int itr = 0; itr <= 200; itr++) {
+
+				struct SplineElement splineElement;					
+				splineElement.location = lcVector2(-320.0 + ((640.0 / 200.0) * itr ), 0);
+			
+				splineElement.rotation = 0;
+				vectorSpline->push_back(splineElement);
+
+			}
+
+			spline = new Spline(vectorSpline, 0, 1, Direction::Backward);
+			vectorSplines.push_back(spline);
+
+
+			// Connction point 1 -> 2 and 2 -> 1
+
+			float p0_transform_x = -320;
+			float p0_transform_y = 0;
+		
+			float p1_transform_x = 0;
+			float p1_transform_y = 0;
+		
+			float p2_transform_x = 0.4683227539;
+			float p2_transform_y = -121.0110168;
+		
+			float p3_transform_x = 333.85324096679688;
+			float p3_transform_y = -259.10357666015625;
+							
+			lcVector2 pointList[] = { 
+				lcVector2(p0_transform_x, p0_transform_y), 
+				lcVector2(p1_transform_x, p1_transform_y), 
+				lcVector2(p2_transform_x, p2_transform_y), 
+				lcVector2(p3_transform_x, p3_transform_y) 
+			};
+
+			vectorSpline = new std::vector<struct SplineElement>();
+
+			BezierLine(pointList, 4, vectorSpline, 200);
+
+			for(int itr = 0; itr < 200; itr++) {
+				std::cout << "pointListResult[" << itr << "] x: " << vectorSpline->at(itr).location.x << ", y: " << vectorSpline->at(itr).location.y << ", rotation: " << vectorSpline->at(itr).rotation << "\n";
+			}
+
+			spline = new Spline(vectorSpline, 1, 2, Direction::Forward);
+			vectorSplines.push_back(spline);
+
+			spline = new Spline(vectorSpline, 2, 1, Direction::Backward);
+			vectorSplines.push_back(spline);
+
+			break;
+		}		
 		
 	}
 }
@@ -225,6 +359,18 @@ lcMatrix44 TrainTrackSection::GetConnectionLocation(int connectionNo) {
 	return lcMul(matOffset,location);
 }
 
+
+lcMatrix44 TrainTrackSection::GetSplineLocation(int splineNo, int splineIdx) {
+	
+	lcVector2 loc2Spline = trackType->vectorSplines[splineNo]->GetLocation(splineIdx);
+
+	lcMatrix44 matOffset = lcMatrix44Identity();
+	matOffset.SetTranslation(lcVector3(loc2Spline.x, loc2Spline.y, 0)); 
+
+	return lcMul(matOffset, location);
+}
+
+
 int TrainTrackSection::GetNoOfConnections() {
 	return trackType->GetNoOfConnections();	
 }
@@ -254,110 +400,43 @@ int TrainTrackSection::FindConnectionNumber(lcVector3 v3searchLocation) {
 }
 
 
-int TrainTrackSection::FindConnectionNumberNoTranslate(lcVector3 v3searchLocation) {
-	float precisionErrorNumber = 0.001;
-
-	lcMatrix44 matOffset;
-
-	for(int con_no = 0; con_no < trackType->GetNoOfConnections(); con_no++) {
-
-		lcVector3 v3Selection = GetConnectionLocation(con_no).GetTranslation();
-		
-		std::cout << "v3Selection x: " << v3Selection.x << ", y: " << v3Selection.y << ", z: " << v3Selection.z << "\n";
-
-		if(abs(v3Selection.x - v3searchLocation.x) < precisionErrorNumber &&
-			abs(v3Selection.y - v3searchLocation.y) < precisionErrorNumber &&
-			abs(v3Selection.z - v3searchLocation.z) < precisionErrorNumber) 
-		{
-			return con_no;
-		}
-	}
-	return -1;
-}
-
-
 TrainLocomotive::TrainLocomotive(TrainTrackSystem* trackSystem) {
 
 	mTrackSystem = trackSystem;
-
-	// Place 
-	trainLocation.section = trackSystem->trackSections[0];
-	trainLocation.pointNo = 20;
-	trainLocation.splineAndDirection = trainLocation.section->trackType->vectorConnectionpointDirection[1];
-
 	mCurrentStep = 1;
-
 }
 
 
-lcVector3 TrainLocomotive::findOtherEndOfCurrentSpline() {
-	
-	std::cout << "Find next part\n";
+void TrainLocomotive::CreateLocomotive() {
 
-	std::vector<struct Spline> curVectorSpline = trainLocation.section->trackType->vectorSplines[trainLocation.splineAndDirection.SplineNo];
+	// Place 
+	trainLocation.section = mTrackSystem->trackSections[0];
+	trainLocation.splineIdx = 20;
+	trainLocation.spline = trainLocation.section->trackType->vectorSplines[1];
 
-	bool ForOrBackward = trainLocation.splineAndDirection.direction;
+	mat44BogieWheel2 = lcMatrix44Identity();
+	mat44BasePlate = lcMatrix44Identity();
 
-	int SplineIdx;
-
-	if(ForOrBackward == 0)  //Forward
-		SplineIdx = curVectorSpline.size() - 1;
-	else 
-		SplineIdx = 0;
-
-
-	lcVector2 splineLoc = curVectorSpline[SplineIdx].location;
-
-
-	lcVector3 v3searchLocation = lcVector3(splineLoc[0], splineLoc[1], 0);
-	lcMatrix44 matBogieOffset = lcMatrix44Identity();
-	
-	matBogieOffset.SetTranslation(v3searchLocation);
-
-	lcMatrix44 matBogieLocation = lcMul(matBogieOffset,trainLocation.section->location);
-
-	return matBogieLocation.GetTranslation();
 }
 
 
 void TrainLocomotive::IncrementTrainLocation() {
 
-	TrainTrackType *trackType = trainLocation.section->trackType;
 
-	//trainLocation.splineAndDirection.SplineNo;
+	Spline *curSpline = trainLocation.spline;
 
-	if(trainLocation.pointNo < (trackType->vectorSplines[trainLocation.splineAndDirection.SplineNo].size() - 1)) {
-	
-		trainLocation.pointNo++;
+	trainLocation.splineIdx++;
 
-		std::vector<struct Spline> curVectorSpline = trainLocation.section->trackType->vectorSplines[trainLocation.splineAndDirection.SplineNo];
+	if(trainLocation.splineIdx >= (curSpline->mSpline->size())) {
 
-		bool ForOrBackward = trainLocation.splineAndDirection.direction;
-	
-		int SplineIdx;
-	
-		if(ForOrBackward == 0)  //Forward
-			SplineIdx = trainLocation.pointNo;		
-		else 
-			SplineIdx = curVectorSpline.size() - 1 - trainLocation.pointNo;
-	
+		// Find next section, train going forward
+
+		int fromConnectionPoint = trainLocation.spline->mToConnectionPointNo;
+
+		std::cout << "fromConnectionPoint(NEW): " << fromConnectionPoint << "\n";
+
+
 		
-		lcVector2 splineLoc = curVectorSpline[SplineIdx].location;
-		
-		std::cout << "pointNo: " << trainLocation.pointNo << "trainLocation.section->vectorSpline.size(): " << curVectorSpline.size() << "\n";
-	}
-	else {
-
-		lcVector3 lcVec3BogieLocation = findOtherEndOfCurrentSpline();
-
-		std::cout << "lcVec3BogieLocation x: " << lcVec3BogieLocation.x << ", y: " << lcVec3BogieLocation.y << ", z: " << lcVec3BogieLocation.z << "\n";
-	
-		int fromConnectionPoint = trainLocation.section->FindConnectionNumberNoTranslate(lcVec3BogieLocation);
-		
-		std::cout << "fromConnectionPoint: " << fromConnectionPoint << "\n";
-
-
-
 		int toNewTrackConnectionIdx;		
 
 		TrainTrackSection* toSection = mTrackSystem->findSectionConnectedTo(trainLocation.section, fromConnectionPoint, toNewTrackConnectionIdx);
@@ -367,123 +446,250 @@ void TrainLocomotive::IncrementTrainLocation() {
 			std::cout << "Got new section\n";
 			std::cout << "toNewTrackConnectionIdx: " << toNewTrackConnectionIdx << "\n"; 
 
-
-			struct DirectionFromConnectionPoint dir = toSection->trackType->vectorConnectionpointDirection[toNewTrackConnectionIdx];
-
-			trainLocation.splineAndDirection = dir;
-
-			std::cout << "DirectionFromConnectionPoint SplineNo: " << dir.SplineNo << "\n"; 
-			std::cout << "DirectionFromConnectionPoint Forward/Backward: " << dir.direction << "\n"; 
+			trainLocation.spline = toSection->trackType->vectorSplines[toNewTrackConnectionIdx];
 			trainLocation.section = toSection;
-			trainLocation.pointNo = 0;
+			trainLocation.splineIdx = 0;
 
 		}
 		else {
 			std::cout << "Got *NO* new section\n";
+			trainLocation.splineIdx--;
 		}
 		
 	}
 
 	std::cout << "START -- Find location of following bogie wheels\n";
 
-	lcVector3 lcVec3BogieLocation = findOtherEndOfCurrentSpline();
-
-	std::cout << "lcVec3BogieLocation x: " << lcVec3BogieLocation.x << ", y: " << lcVec3BogieLocation.y << ", z: " << lcVec3BogieLocation.z << "\n";
-
-	int fromConnectionPoint = trainLocation.section->FindConnectionNumberNoTranslate(lcVec3BogieLocation);
-
-	std::cout << "fromConnectionPoint: " << fromConnectionPoint << "\n";
+	// Find previous section
 	
-	struct DirectionFromConnectionPoint dir = trainLocation.section->trackType->vectorConnectionpointDirection[fromConnectionPoint];
-
-//-->
-	std::vector<struct Spline> curVectorSplineBW2 = trainLocation.section->trackType->vectorSplines[dir.SplineNo];
-
-	bool ForOrBackward = dir.direction;
-
-	int SplineIdx;
-
-	if(ForOrBackward == 0)  //Forward
-		SplineIdx = curVectorSplineBW2.size() - 1;
-	else 
-		SplineIdx = 0;
-
+	lcVector3 locBogieVec3 = GetBoogieWorldPosition().GetTranslation();
 	
-	lcVector2 splineLoc = curVectorSplineBW2[SplineIdx].location;
-
-	lcVector3 v3searchLocation = lcVector3(splineLoc[0], splineLoc[1], 0);
-	lcMatrix44 matBogieOffsetBW2 = lcMatrix44Identity();
+	locBogieVec3.z = 0;
 	
-	matBogieOffsetBW2.SetTranslation(v3searchLocation);
+	std::cout << "locomotive x: " << locBogieVec3.x << ", y: " << locBogieVec3.y << ", z: " << locBogieVec3.z << "\n";
 
-	lcMatrix44 matBogieLocationBW2 = lcMul(matBogieOffsetBW2,trainLocation.section->location);
+	double distance = 0;
 
-	lcVector3 lcVec3BogieLocationBW2 =  matBogieLocationBW2.GetTranslation();
+	int fromConnectionPoint = trainLocation.spline->mFromConnectionPointNo;
 
-	std::cout << "lcVec3BogieLocation x: " << lcVec3BogieLocationBW2.x << ", y: " << lcVec3BogieLocationBW2.y << ", z: " << lcVec3BogieLocationBW2.z << "\n";
+	std::cout << "fromConnectionPoint(NEW): " << fromConnectionPoint << "\n";
 
-	int otherEndConnectionPoint = trainLocation.section->FindConnectionNumberNoTranslate(lcVec3BogieLocationBW2);
+	TrainTrackSection *toPrevSection = trainLocation.section;
+	
+	lcVector3 connLocVector3 = toPrevSection->GetConnectionLocation(fromConnectionPoint).GetTranslation();
+
+	distance = lcDistance(connLocVector3, locBogieVec3);
+
+	std::cout << "Distance: " << distance << "\n";
+
+	int toNewTrackConnectionIdx = trainLocation.spline->mToConnectionPointNo;
+
+	// Start -- Make spline to go in opposite direction
+	/*Spline prevSectionSpline = Spline(trainLocation.spline->mSpline,trainLocation.spline->mToConnectionPointNo,trainLocation.spline->mFromConnectionPointNo,Direction::Forward);
+
+	if(trainLocation.spline->mSplineDirection == Direction::Backward)
+		prevSectionSpline.mSplineDirection = Direction::Forward;
+	else
+		prevSectionSpline.mSplineDirection = Direction::Backward;*/
+	// End -- Make spline to go in opposite direction
+
+
+	Spline* prevSectionSpline = trainLocation.section->trackType->vectorSplines[toNewTrackConnectionIdx];
+	
+
+	bool noMoreTracks = false;
+	
+	while(distance < 360 && noMoreTracks == false) {
+
+		toPrevSection = mTrackSystem->findSectionConnectedTo(toPrevSection, fromConnectionPoint, toNewTrackConnectionIdx);
+
+		if(toPrevSection != nullptr) {
+
+			prevSectionSpline = toPrevSection->trackType->vectorSplines[toNewTrackConnectionIdx];
+			
+			fromConnectionPoint = prevSectionSpline->mToConnectionPointNo;
+			
+			std::cout << "Got new section\n";
+			//std::cout << "toNewTrackConnectionIdx: " << toNewTrackConnectionIdx << "\n"; 
+	
+			lcVector3 connLocVector3 = toPrevSection->GetConnectionLocation(fromConnectionPoint).GetTranslation();
+			
+			std::cout << "toPrevSection x: " << connLocVector3.x << ", y: " << connLocVector3.y << ", z: " << connLocVector3.z << "\n";
 		
-	std::cout << "otherEndConnectionPoint: " << otherEndConnectionPoint << "\n";
-
-	int toNewTrackConnectionIdx2;		
-
-	TrainTrackSection* toSection2 = mTrackSystem->findSectionConnectedTo(trainLocation.section, otherEndConnectionPoint, toNewTrackConnectionIdx2);
+			distance = lcDistance(connLocVector3, locBogieVec3);
 	
-	if(toSection2 != nullptr) {
+			std::cout << "Distance: " << distance << "\n";
 		
-		std::cout << "Got new section\n";
-		std::cout << "toNewTrackConnectionIdx: " << toNewTrackConnectionIdx2 << "\n"; 
-
-
-		struct DirectionFromConnectionPoint dir2 = toSection2->trackType->vectorConnectionpointDirection[toNewTrackConnectionIdx2];
-
-		std::cout << "DirectionFromConnectionPoint SplineNo: " << dir2.SplineNo << "\n"; 
-		std::cout << "DirectionFromConnectionPoint Forward/Backward: " << dir2.direction << "\n"; 
-
-		std::vector<struct Spline> curVectorSpline2 = toSection2->trackType->vectorSplines[dir2.SplineNo];
-
-		lcVector2 splineLoc2 = curVectorSpline2[0].location;
-
-		lcVector3 trainLoc2 = lcVector3(splineLoc2[0], splineLoc2[1], 0);
-
-		// Bogie wheel location on train
-	
-		std::cout << "TrainLocation - WheelBogie 2: " << trainLoc2[0] << ", " << trainLoc2[1] << ", " << trainLoc2[2] << "\n";
-	
-		lcMatrix44 matBogieOffset2 = lcMatrix44Identity();
+		}
+		else {
+			noMoreTracks = true;
+		}	
 		
-		matBogieOffset2.SetTranslation(trainLoc2); 
-	
-		lcMatrix44 matBogieWorld = lcMul(matBogieOffset2,toSection2->location);
-	
-		lcVector3 lcVec3BogieLocationWorld =  matBogieWorld.GetTranslation();
+	}
 
-		std::cout << "lcVec3BogieLocationWorld x: " << lcVec3BogieLocationWorld.x << ", y: " << lcVec3BogieLocationWorld.y << ", z: " << lcVec3BogieLocationWorld.z << "\n";
+	// Find lenght from bogie to 360
+	if(noMoreTracks == false) {
+
+		int maxPtr = prevSectionSpline->mSpline->size() - 1;
+		int minPtr = 0;
+
+		int middlePtr;
+
+		bool bExactFound = false;
+
+		while(abs(minPtr - maxPtr) > 1 && bExactFound == false) {
+		
+			middlePtr = (maxPtr + minPtr) / 2;
+
+			lcMatrix44 mat44SplineLoc = toPrevSection->GetSplineLocation(toNewTrackConnectionIdx, middlePtr);
+
+			lcVector3 loc3SplineWorld = mat44SplineLoc.GetTranslation();
+
+			std::cout << "loc3SplineWorld x: " << loc3SplineWorld.x << ", y: " << loc3SplineWorld.y << ", z: " << loc3SplineWorld.z << "\n";		
+		
+			distance = lcDistance(loc3SplineWorld, locBogieVec3);
+
+			std::cout << "Distance: " << distance << "\n";
+
+			if(abs(distance - 360) < precisionErrorNumber) {
+				bExactFound = true;
+			}
+			else {
+				if(distance > 360) {
+					std::cout << "maxPtr = middlePtr\n";
+					maxPtr = middlePtr;
+				}
+				else {
+					std::cout << "minPtr = middlePtr\n";
+					minPtr = middlePtr;
+				}
+			}
+			std::cout << "maxPtr: " << maxPtr << ", minPtr: " << minPtr << "\n";
+
+		}
+
+		if(bExactFound == false) {
+			std::cout << std::setprecision(15);
+			lcMatrix44 mat44SplineLoc = toPrevSection->GetSplineLocation(toNewTrackConnectionIdx, minPtr);
+			lcVector3 loc3SplineWorldMin = mat44SplineLoc.GetTranslation();
+			distance = lcDistance(loc3SplineWorldMin, locBogieVec3);
+			std::cout << "Distance minPtr: " << distance << "\n";
+
+			mat44SplineLoc = toPrevSection->GetSplineLocation(toNewTrackConnectionIdx, maxPtr);
+			lcVector3 loc3SplineWorldMax = mat44SplineLoc.GetTranslation();
+			distance = lcDistance(loc3SplineWorldMax, locBogieVec3);
+			std::cout << "Distance maxPtr: " << distance << "\n";
+
+			std::vector<Point2D> points = lcFindIntersectionLineCircle(Point2D(loc3SplineWorldMin.x, loc3SplineWorldMin.y),
+										Point2D(loc3SplineWorldMax.x, loc3SplineWorldMax.y),
+										Point2D(locBogieVec3.x, locBogieVec3.y),
+										360);
+
+			lcVector3 loc3SplineWorldInterpolation = lcVector3(points[0].x, points[0].y, 0);
+			distance = lcDistance(loc3SplineWorldInterpolation, locBogieVec3);
+			std::cout << "Distance interpolate: " << distance << "\n";
+
+
+			mat44BogieWheel2  = lcMatrix44Identity();
+
+			double rotItrMin = toPrevSection->trackType->vectorSplines[toNewTrackConnectionIdx]->GetRotation(minPtr);
+			double rotItrMax = toPrevSection->trackType->vectorSplines[toNewTrackConnectionIdx]->GetRotation(maxPtr);
+
+			double middleRotation = (rotItrMax + rotItrMin) / 2;
+		
+
+			//Get location for the train section the train is on			
+			lcVector3 trainLoc = lcVector3(loc3SplineWorldInterpolation.x, loc3SplineWorldInterpolation.y, 76);
+							
+			mat44BogieWheel2 = toPrevSection->location;
+
+			mat44BogieWheel2.SetTranslation(trainLoc); 
+		
+			lcMatrix44 matBogieRotate = lcMatrix44Identity();
+			
+			double rotationBogie = 90 + middleRotation;
+		
+			matBogieRotate = lcMatrix44RotationZ(LC_DTOR * rotationBogie);
+		
+			mat44BogieWheel2 = lcMul(matBogieRotate, mat44BogieWheel2);
+		
+			//matBogieRotate = lcMul(matBogieRotate,toPrevSection->location);
+
+			/*double rotateBasePlate = lcGetAngle(loc3SplineWorldInterpolation.x, loc3SplineWorldInterpolation.y, 
+													locBogieVec3.x, locBogieVec3.y);
+		
+			std::cout << "rotateBasePlate: " << rotateBasePlate << "\n";*/													
+
+			// Set Baseplate location and rotation
+			double basePlate_posX = (loc3SplineWorldInterpolation.x + locBogieVec3.x) / 2;
+			double basePlate_posY = (loc3SplineWorldInterpolation.y + locBogieVec3.y) / 2;
+
+			lcVector3 basePlateLoc = lcVector3(basePlate_posX, basePlate_posY, 84);
+							
+			mat44BasePlate = lcMatrix44Identity();
+			mat44BasePlate.SetTranslation(basePlateLoc); 
+		
+			
+			double rotateBasePlate = lcGetAngle(loc3SplineWorldInterpolation.x, loc3SplineWorldInterpolation.y, 
+													locBogieVec3.x, locBogieVec3.y);
+			
+			std::cout << "rotateBasePlate: " << rotateBasePlate << "\n";
+
+			lcMatrix44 mat44BasePlateRotate = lcMatrix44RotationZ(rotateBasePlate);
+
+			mat44BasePlate = lcMul(mat44BasePlateRotate, mat44BasePlate);
+
+
+
+
+
+
+		}
+		else {
+			std::cout << "Exaxct match: Spline item has exact length to first bogie wheels\n";
+		}
+
+
 
 
 	}
-	else {
-		std::cout << "Got *NO* new section\n";
-	}
 
-
-//-->
-
-
-
-
-
-	
 
 	std::cout << "END -- Find location of following bogie wheels\n";
 
-
-
-
-
-
 }
+
+
+lcMatrix44 TrainLocomotive::GetBoogieWorldPosition() {
+		
+	lcMatrix44 matBogieOffset = lcMatrix44Identity();
+
+	//Get location for the train section the train is on
+	lcVector3 trainLoc = lcVector3(0, 0, 76); 
+
+	
+	lcVector2 splineLoc = GetSplineLocation();
+
+	trainLoc += lcVector3(splineLoc[0], splineLoc[1], 0);
+
+	matBogieOffset.SetTranslation(trainLoc); 
+
+	lcMatrix44 matBogieRotate = lcMatrix44Identity();
+	
+	double rotationBogie = 90 + GetSplineRotation();
+
+	matBogieRotate = lcMatrix44RotationZ(LC_DTOR * rotationBogie);
+
+	matBogieRotate = lcMul(matBogieRotate, matBogieOffset);
+
+	matBogieRotate = lcMul(matBogieRotate,trainLocation.section->location);
+
+	lcVector3 locVec3World = matBogieRotate.GetTranslation();
+
+	return matBogieRotate;
+	
+}
+
 
 void TrainLocomotive::GetPieces(std::vector<lcPiece*>& pieces) {
 	
@@ -493,53 +699,30 @@ void TrainLocomotive::GetPieces(std::vector<lcPiece*>& pieces) {
 	
 	lcPiece* piece = new lcPiece(pieceWheelBogie);
 
-	lcMatrix44 matBogieOffset = lcMatrix44Identity();
-
-	//Get location for the train section the train is on
-	lcVector3 trainLoc; // = trainLocation.section->location.GetTranslation();
-
-	//Get location for the spline with index
-
-	std::vector<struct Spline> curVectorSpline = trainLocation.section->trackType->vectorSplines[trainLocation.splineAndDirection.SplineNo];
-
-	bool ForOrBackward = trainLocation.splineAndDirection.direction;
-
-	int SplineIdx;
-
-	if(ForOrBackward == 0)  //Forward
-		SplineIdx = trainLocation.pointNo;		
-	else 
-		SplineIdx = curVectorSpline.size() - 1 - trainLocation.pointNo;
-
-	
-	lcVector2 splineLoc = curVectorSpline[SplineIdx].location;
-
-
-	trainLoc += lcVector3(splineLoc[0], splineLoc[1], 0);
-
-	// Bogie wheel location on train
-	trainLoc += lcVector3(0, 0, 76); 
-
-	std::cout << "TrainLocation - WheelBogie 1: " << trainLoc[0] << ", " << trainLoc[1] << ", " << trainLoc[2] << "\n";
-
-	matBogieOffset.SetTranslation(trainLoc); 
-
-	lcMatrix44 matBogieRotate = lcMatrix44Identity();
-	
-	double rotationBogie = 90 + curVectorSpline[SplineIdx].rotation;
-	if(ForOrBackward == true) {
-		rotationBogie += 180;
-	}
-	matBogieRotate = lcMatrix44RotationZ(LC_DTOR * rotationBogie);
-
-	matBogieRotate = lcMul(matBogieRotate, matBogieOffset);
-
-	matBogieRotate = lcMul(matBogieRotate,trainLocation.section->location);
+	lcMatrix44 matBogieRotate = GetBoogieWorldPosition();
 
 	piece->Initialize(matBogieRotate, mCurrentStep);
 	piece->SetColorIndex(1);
-	
+
+	pieces.push_back(piece);	
+
+	//Following bogie wheels	
+	piece = new lcPiece(pieceWheelBogie);
+
+	piece->Initialize(mat44BogieWheel2, mCurrentStep);
+	piece->SetColorIndex(1);
+
 	pieces.push_back(piece);
+
+	
+	PieceInfo* pieceIndTrainBase = Library->FindPiece("92339.dat", nullptr, false, false);
+	piece = new lcPiece(pieceIndTrainBase);
+
+	piece->Initialize(mat44BasePlate, mCurrentStep);
+	piece->SetColorIndex(1);
+
+	pieces.push_back(piece);
+
 
 }
 
@@ -560,6 +743,8 @@ TrainTrackSystem::TrainTrackSystem()
 	: mModel(new lcModel(QString(), nullptr, false))
 {
 	lcPiecesLibrary* Library = lcGetPiecesLibrary();
+
+	mLocomotive = new TrainLocomotive(this);
 
 	float xHalfBendOff = sin(LC_DTOR * 11.25) * 800;
 	float yHalfBendOff = ((cos(LC_DTOR * 11.25) * 800) - 800);
@@ -642,10 +827,11 @@ void TrainTrackSystem::addFirstTrackSection(lcMatrix44 position, enum LC_TTS_TYP
 	TrainTrackSection *first_section = new TrainTrackSection(trainTrackType, position, mCurrentStep, mColorIndex);
 	trackSections.push_back(first_section);
 
-	mLocomotive = new TrainLocomotive(this);
-
 	addTrackSection(trackSections[0], 0, LC_TTS_STRAIGHT, 0);
-	addTrackSection(trackSections[1], 1, LC_TTS_CURVED, 0);
+	addTrackSection(trackSections[1], 1, LC_TTS_LEFT_BRANCH, 2);
+
+
+	/*addTrackSection(trackSections[1], 1, LC_TTS_CURVED, 0);
 	addTrackSection(trackSections[2], 1, LC_TTS_CURVED, 0);
 	addTrackSection(trackSections[3], 1, LC_TTS_CURVED, 0);
 	addTrackSection(trackSections[4], 1, LC_TTS_CURVED, 0);
@@ -675,7 +861,7 @@ void TrainTrackSystem::addFirstTrackSection(lcMatrix44 position, enum LC_TTS_TYP
 	addTrackSection(trackSections[28], 0, LC_TTS_CURVED, 1);
 	addTrackSection(trackSections[29], 0, LC_TTS_CURVED, 1);
 	addTrackSection(trackSections[30], 0, LC_TTS_STRAIGHT, 0);
-	addTrackSection(trackSections[31], 1, LC_TTS_STRAIGHT, 0);
+	addTrackSection(trackSections[31], 1, LC_TTS_STRAIGHT, 0);*/
 
 
 
@@ -760,14 +946,13 @@ void TrainTrackSystem::addTrackSection(TrainTrackSection* fromTrackSection, int 
 
 TrainTrackSection* TrainTrackSystem::findSectionConnectedTo(TrainTrackSection* fromTrackSection, int fromTrackSectionConnectionIdx, int& toTrackSectionConnectionIdx) {
 
-	std::cout << std::setprecision(15);
+	//std::cout << std::setprecision(15);
 
 	lcMatrix44 fromConnLocMaxtrix = fromTrackSection->GetConnectionLocation(fromTrackSectionConnectionIdx);
 	
 	lcVector3 fromConnLocVec3 = fromConnLocMaxtrix.GetTranslation();
 
-	std::cout << "fromConnLocVec3, x: " << fromConnLocVec3[0] << ", y: " << fromConnLocVec3[1] << "\n";
-
+	//std::cout << "fromConnLocVec3, x: " << fromConnLocVec3[0] << ", y: " << fromConnLocVec3[1] << "\n";
 	
 	for(int trackSectionIdx = 0; trackSectionIdx < trackSections.size(); trackSectionIdx++) {
 		
@@ -777,13 +962,13 @@ TrainTrackSection* TrainTrackSystem::findSectionConnectedTo(TrainTrackSection* f
 	 
 			for(int connectionIdx = 0; connectionIdx < toSection->GetNoOfConnections(); connectionIdx++) {
 
-				std::cout << "trackSectionIdx: " << trackSectionIdx << ", connectionIdx: " << connectionIdx << "\n";
+				//std::cout << "trackSectionIdx: " << trackSectionIdx << ", connectionIdx: " << connectionIdx << "\n";
 
 				lcMatrix44 connLocMaxtrix = toSection->GetConnectionLocation(connectionIdx);
 				
 				lcVector3 connLocVec3 = connLocMaxtrix.GetTranslation();
 
-				std::cout << "connLocVec3, x: " << connLocVec3[0] << ", y: " << connLocVec3[1] << "\n";
+				//std::cout << "connLocVec3, x: " << connLocVec3[0] << ", y: " << connLocVec3[1] << "\n";
 
 				if(abs(fromConnLocVec3[0] - connLocVec3[0]) < precisionErrorNumber && 
 					abs(fromConnLocVec3[1] - connLocVec3[1]) < precisionErrorNumber) {
