@@ -5,6 +5,8 @@
 #include "lc_model.h"
 #include "pieceinf.h"
 #include "lc_partselectionwidget.h"
+#include "lc_traintrack.h"
+
 
 QString lcFormatValue(float Value, int Precision)
 {
@@ -253,6 +255,32 @@ lcTrainTrackPickerPopup::lcTrainTrackPickerPopup(QWidget* Parent, const lcTrainT
 	QObject::connect(ButtonBox, &QDialogButtonBox::rejected, this, &lcTrainTrackPickerPopup::Reject);
 }
 
+
+lcTrainTrackPickerPopup::lcTrainTrackPickerPopup(QWidget* Parent, const struct lcTrainTrackConnection& connection)
+	: QWidget(Parent)
+{
+	QVBoxLayout* Layout = new QVBoxLayout(this);
+
+	mPartSelectionListView = new lcPartSelectionListView(this, nullptr);
+	Layout->addWidget(mPartSelectionListView);
+
+	mPartSelectionListView->setMinimumWidth(450);
+	mPartSelectionListView->setDragEnabled(false);
+
+	//std::vector<PieceInfo*> Parts = lcGetPiecesLibrary()->GetVisibleTrainTrackParts(connection.Type);
+
+	mPartSelectionListView->SetCustomParts(connection.mRelatedPieces->mRelatedPieces);
+
+	connect(mPartSelectionListView, &lcPartSelectionListView::PartPicked, this, &lcTrainTrackPickerPopup::Accept);
+
+	QDialogButtonBox* ButtonBox = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel, this);
+	Layout->addWidget(ButtonBox);
+
+	QObject::connect(ButtonBox, &QDialogButtonBox::accepted, this, &lcTrainTrackPickerPopup::Accept);
+	QObject::connect(ButtonBox, &QDialogButtonBox::rejected, this, &lcTrainTrackPickerPopup::Reject);
+}
+
+
 void lcTrainTrackPickerPopup::showEvent(QShowEvent* ShowEvent)
 {
 	QWidget::showEvent(ShowEvent);
@@ -293,6 +321,23 @@ PieceInfo* lcShowTrainTrackPopup(QWidget* Parent, const lcTrainTrackConnectionTy
 
 	return Popup->GetPickedTrainTrack();
 }
+
+
+PieceInfo* lcShowTrainTrackPopupRelated(QWidget* Parent, const struct lcTrainTrackConnection& connection)
+{
+	std::unique_ptr<QMenu> Menu(new QMenu(Parent));
+	QWidgetAction* Action = new QWidgetAction(Menu.get());
+	lcTrainTrackPickerPopup* Popup = new lcTrainTrackPickerPopup(Menu.get(), connection);
+
+	Action->setDefaultWidget(Popup);
+	Menu->addAction(Action);
+
+	Menu->exec(QCursor::pos());
+
+	return Popup->GetPickedTrainTrack();
+}
+
+
 
 lcColorDialogPopup::lcColorDialogPopup(const QColor& InitialColor, QWidget* Parent)
 	: QWidget(Parent)

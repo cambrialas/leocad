@@ -198,6 +198,8 @@ class lcTrainTrackPickerPopup : public QWidget
 
 public:
 	lcTrainTrackPickerPopup(QWidget* Parent, const lcTrainTrackConnectionType& ConnectionType);
+	
+	lcTrainTrackPickerPopup(QWidget* Parent, const struct lcTrainTrackConnection& connection);
 
 	PieceInfo* GetPickedTrainTrack() const
 	{
@@ -217,6 +219,7 @@ protected:
 };
 
 PieceInfo* lcShowTrainTrackPopup(QWidget* Parent, const lcTrainTrackConnectionType& ConnectionType);
+PieceInfo* lcShowTrainTrackPopupRelated(QWidget* Parent, const struct lcTrainTrackConnection& connection);
 
 class lcColorDialogPopup : public QWidget
 {

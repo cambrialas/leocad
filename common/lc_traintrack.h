@@ -14,6 +14,23 @@ enum class lcTrainTrackConnectionSleeper
 	NeedsSleeper
 };
 
+
+class lcTrainTrackConnectionRelatedPieces {
+	
+	public:
+		lcTrainTrackConnectionRelatedPieces(QString& groupName, std::vector<PieceInfo*>& relatedPieces) {
+			
+			mGroupName = groupName;
+			mRelatedPieces = std::move(relatedPieces);
+
+		};
+
+		QString mGroupName;
+		
+		std::vector<PieceInfo*> mRelatedPieces;
+};
+
+
 struct lcTrainTrackConnectionType
 {
 	quint32 Group;
@@ -24,6 +41,9 @@ struct lcTrainTrackConnection
 {
 	lcMatrix44 Transform;
 	lcTrainTrackConnectionType Type;
+
+	lcTrainTrackConnectionRelatedPieces* mRelatedPieces = nullptr;
+
 };
 
 class lcTrainTrackInfo

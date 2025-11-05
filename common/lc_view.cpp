@@ -19,6 +19,8 @@
 #include "lc_library.h"
 #include "lc_qutils.h"
 
+#include <iostream>
+
 lcFindReplaceParams lcView::mFindReplaceParams;
 QPointer<lcFindReplaceWidget> lcView::mFindWidget;
 
@@ -331,7 +333,9 @@ void lcView::ShowTrainTrackPopup()
 	int ConnectionIndex = mTrackToolSection - LC_PIECE_SECTION_TRAIN_TRACK_CONNECTION_FIRST;
 	const lcTrainTrackConnectionType& ConnectionType = TrainTrackInfo->GetConnections()[ConnectionIndex].Type;
 
-	PieceInfo* Info = lcShowTrainTrackPopup(mWidget, ConnectionType);
+	//PieceInfo* Info = lcShowTrainTrackPopup(mWidget, ConnectionType);
+	std::cout << "open related pieces\n";
+	PieceInfo* Info = lcShowTrainTrackPopupRelated(mWidget, TrainTrackInfo->GetConnections()[ConnectionIndex]);
 
 	if (Info)
 	{

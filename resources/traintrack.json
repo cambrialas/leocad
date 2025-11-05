@@ -1,7 +1,241 @@
 {
 	"Version": 1,
+	"Groups":
+	[
+		{
+			"ID": "TorsoArmsRight",
+			"Pieces": ["3819.dat", "U9332.DAT", "16001P04.DAT"]
+		},
+		{
+			"ID": "TorsoArmsLeft",
+			"Pieces": ["3818.dat", "16000P04.DAT", "3818PX0.DAT"]
+		},
+		{
+			"ID": "Hand",
+			"Pieces": ["3820.dat"]
+		},
+		{
+			"ID": "Head",
+			"Pieces": ["3626cp7j.dat","3626cp7f.dat"]
+		},
+		{
+			"ID": "Legs",
+			"Pieces": ["73200-f1.dat"]
+		},
+		{
+			"ID": "HeadTop",
+			"Pieces": ["11605.dat"]
+		}
+
+	],
 	"Pieces":
 	[
+		{
+			"Description": "Minifig torso",
+			"IDs": [ "973.dat" ],
+			"Color": 1,
+			"Connections":
+			[
+				{
+					"Position": [ -15.552, 0.0, -8.88 ],
+					"RotationZ": 180,
+					"RotationY": -9.791,
+					"Type": "Minifig",
+					"GroupID" : "TorsoArmsLeft"
+				},
+				{
+					"Position": [ 15.552, 0.0, -8.88 ],
+					"RotationZ": 0,
+					"RotationY": -9.791,
+					"Type": "Minifig",
+					"GroupID" : "TorsoArmsRight"
+				},
+				{
+					"Position": [ 0.0, 0.0, 0.0 ],
+					"RotationZ": 0,
+					"RotationY": 0,
+					"Type": "Minifig",
+					"GroupID" : "Head"
+				},
+				{
+					"Position": [ 0.0, 0.0, -32.0 ],
+					"RotationZ": 0,
+					"RotationY": 0,
+					"Type": "Minifig",
+					"GroupID" : "Legs"
+				}
+
+			]
+		},
+		{
+			"Description": "Minifig torso",
+			"IDs": [ "973pc1.dat" ],
+			"Color": 1,
+			"Connections":
+			[
+				{
+					"Position": [ -15.552, 0.0, -8.88 ],
+					"RotationZ": 180,
+					"RotationY": -9.791,
+					"Type": "Minifig",
+					"GroupID" : "TorsoArmsLeft"
+				},
+				{
+					"Position": [ 15.552, 0.0, -8.88 ],
+					"RotationZ": 0,
+					"RotationY": -9.791,
+					"Type": "Minifig",
+					"GroupID" : "TorsoArmsRight"
+				},
+				{
+					"Position": [ 0.0, 0.0, 0.0 ],
+					"RotationZ": 0,
+					"RotationY": 0,
+					"Type": "Minifig",
+					"GroupID" : "Head"
+				},
+				{
+					"Position": [ 0.0, 0.0, -32.0 ],
+					"RotationZ": 0,
+					"RotationY": 0,
+					"Type": "Minifig",
+					"GroupID" : "Legs"
+				}
+
+			]
+		},
+		{
+			"Description": "Minifig right arm",
+			"IDs": [ "3818.dat" ],
+			"Color": 1,
+			"Connections":
+			[
+				{
+					"Position": [ 0.0, 0.0, 0.0 ],
+					"RotationZ": 0,
+					"RotationY": 0,
+					"Type": "Minifig"
+				},
+				{
+					"Position": [ -5.0, -10.0, -19.0 ],
+					"RotationZ": 90,
+					"RotationY": 135,
+					"Type": "Minifig",
+					"GroupID" : "Hand"
+				}
+			]
+		},
+		{
+			"Description": "Minifig left arm",
+			"IDs": [ "3819.dat" ],
+			"Color": 1,
+			"Connections":
+			[
+				{
+					"Position": [ 0.0, 0.0, 0.0 ],
+					"RotationZ": 180,
+					"RotationY": 0,
+					"Type": "Minifig"
+				},
+				{
+					"Position": [ 5.0, -10.0, -19.0 ],
+					"RotationZ": 90,
+					"RotationY": 135,
+					"Type": "Minifig",
+					"GroupID" : "Hand"
+				}
+			]
+		},
+		{
+			"Description": "Minifig hand",
+			"IDs": [ "3820.dat" ],
+			"Color": 1,
+			"Connections":
+			[
+				{
+					"Position": [ 0.0, 0.0, 0.0 ],
+					"RotationZ": 90,
+					"RotationY": 0,
+					"Type": "Minifig"
+				}
+			]
+		},
+		{
+			"Description": "Minifig head",
+			"IDs": [ "3626cp7j.dat" ],
+			"Color": 1,
+			"Connections":
+			[
+				{
+					"Position": [ 0.0, 0.0, -24.0 ],
+					"RotationZ": 0,
+					"RotationY": 0,
+					"Type": "Minifig"
+				}
+			]
+		},
+
+		{
+			"Description": "Minifig head",
+			"IDs": ["3626cp7f.dat"],
+			"Color": 1,
+			"Connections":
+			[
+				{
+					"Position": [ 0.0, 0.0, -24.0 ],
+					"RotationZ": 180,
+					"RotationY": 0,
+					"Type": "Minifig"
+				},
+				{
+					"Position": [ 0.0, 0.0, 0.0 ],
+					"RotationZ": 0,
+					"RotationY": 0,
+					"Type": "Minifig",
+					"GroupID" : "HeadTop"
+				}
+
+			]
+		},	
+
+		{
+			"Description": "Minifig hair",
+			"IDs": ["11605.dat"],
+			"Color": 1,
+			"Connections":
+			[
+				{
+					"Position": [ 0.0, 0.0, 0.0 ],
+					"RotationZ": 180,
+					"RotationY": 0,
+					"Type": "Minifig"
+				}
+			]
+		},
+
+		{
+			"Description": "Minifig legs",
+			"IDs": ["73200-f1.dat"],
+			"Color": 1,
+			"Connections":
+			[
+				{
+					"Position": [ 0.0, 0.0, 0.0 ],
+					"RotationZ": 180,
+					"RotationY": 0,
+					"Type": "Minifig"
+				}
+			]
+		},
+
+
+
+
+
+
+
+		
+		
 		{
 			"Description": "Train Track  9V Point Right",
 			"IDs": [ "2859c03.dat", "2859c04.dat" ],
