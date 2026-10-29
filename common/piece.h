@@ -187,6 +187,9 @@ public:
 	void UpdatePosition(lcStep Step) override;
 	void MoveSelected(lcStep Step, bool AddKey, const lcVector3& Distance);
 	void Rotate(lcStep Step, bool AddKey, const lcMatrix33& RotationMatrix, const lcVector3& Center, const lcMatrix33& RotationFrame);
+
+	void UpdateAABBFromInfo();
+
 	void MovePivotPoint(const lcVector3& Distance);
 	void RotatePivotPoint(const lcMatrix33& RotationMatrix);
 
@@ -291,11 +294,16 @@ public:
 		mPivotMatrix = lcMatrix44Identity();
 	}
 
+	lcBoundingBox* mAABoundingBox = nullptr;
+
 public:
 	PieceInfo* mPieceInfo;
 
 	lcMatrix44 mModelWorld;
 	lcMatrix44 mPivotMatrix;
+
+
+	
 
 protected:
 	void UpdateMesh();
@@ -333,4 +341,6 @@ protected:
 	std::vector<lcPieceControlPoint> mControlPoints;
 	std::vector<bool> mTrainTrackConnections;
 	lcMesh* mMesh = nullptr;
+
+	
 };

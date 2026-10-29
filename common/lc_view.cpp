@@ -92,7 +92,7 @@ std::vector<lcView*> lcView::GetModelViews(const lcModel* Model)
 
 void lcView::UpdateProjectViews(const Project* Project)
 {
-	for (lcView* View : mViews)
+ 	for (lcView* View : mViews)
 	{
 		const lcModel* ViewModel = View->GetActiveModel();
 
@@ -897,7 +897,19 @@ void lcView::OnDraw()
 	mScene->SetActiveSubmodelInstance(mActiveSubmodelInstance, mActiveSubmodelTransform);
 	mScene->SetDrawInterface(DrawInterface);
 
+	
+	auto startGS = std::chrono::high_resolution_clock::now();
+
 	mModel->GetScene(mScene.get(), mCamera, Preferences.mHighlightNewParts, Preferences.mFadeSteps);
+
+	
+	auto endGS = std::chrono::high_resolution_clock::now();
+
+	auto durationGS = std::chrono::duration_cast<std::chrono::microseconds>(endGS - startGS);
+
+	printf("Time for mModel->GetScene: %lld microseconds\n", durationGS.count());
+	
+	
 
 	if (DrawInterface && mTrackTool == lcTrackTool::Insert)
 	{
@@ -2143,7 +2155,7 @@ void lcView::UpdateTrackTool()
 			mTrackToolFromOverlay = NewTrackTool != lcTrackTool::MoveXYZ && NewTrackTool != lcTrackTool::Select;
 			Redraw = NewTrackTool != mTrackTool || NewTrackSection != mTrackToolSection;
 
-			if (CurrentTool == lcTool::Select && NewTrackTool == lcTrackTool::Select && mMouseModifiers == Qt::NoModifier)
+			/*if (CurrentTool == lcTool::Select && NewTrackTool == lcTrackTool::Select && mMouseModifiers == Qt::NoModifier)
 			{
 				lcObjectSection ObjectSection = FindObjectUnderPointer(false, false);
 				lcObject* Object = ObjectSection.Object;
@@ -2155,10 +2167,10 @@ void lcView::UpdateTrackTool()
 					mMouseDownPiece = Piece;
 					NewTrackTool = lcTrackTool::MoveXYZ;
 				}
-			}
+			}*/
 		}
 		break;
-
+		
 	case lcTool::Rotate:
 		{
 			NewTrackTool = mViewManipulator->UpdateRotate();

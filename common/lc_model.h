@@ -103,6 +103,45 @@ struct lcModelHistoryEntry
 	QString Description;
 };
 
+
+struct Ray {
+    lcVector3 origin;      // origin
+    lcVector3 direction;      // direction
+    lcVector3 invDir;   // = 1.0 / d   ← precomputed!
+    int sign[3]; 	// which quadrant the ray is in
+	float rayLength;
+};
+
+/*struct Hit {
+    float t = FLT_MAX;      // ray distance to hit
+    int   objectID = -1;    // which object was hit
+
+    bool HasHit() const { return objectID >= 0; }
+};*/
+
+
+struct BVHNode {
+	
+	lcBoundingBox bounds;
+	
+	BVHNode* leftNode; // Points to BVHNode or if leaf node to mBVHLeafNodes index
+	BVHNode* rightNode;
+
+	int BVHLeafNodesIndex; // Used when node is a leaf
+
+	bool isLeaf;
+
+};
+
+struct BVHLeafNode {
+
+	lcBoundingBox bounds;
+	lcVector3 centroid;
+	int mPiecesIndex;
+
+};
+
+
 class lcModel
 {
 public:
@@ -405,6 +444,14 @@ protected:
 	void AddPiece(lcPiece* Piece);
 	void InsertPiece(lcPiece* Piece, size_t Index);
 
+	void BuildBVHTree();
+	BVHNode* BuildBVHNode(long unsigned int startIndex, long unsigned int endIndex);
+	void TraverseBVH(BVHNode* bvhNode, const Ray& ray, lcObjectRayTest& ObjectRayTest) const;
+	inline float RayAABBEntryDistance(const Ray& ray, const lcBoundingBox& aabb) const;
+	
+
+
+
 	lcPOVRayOptions mPOVRayOptions;
 	lcModelProperties mProperties;
 	Project* const mProject;
@@ -427,4 +474,7 @@ protected:
 	std::vector<lcModelHistoryEntry*> mRedoHistory;
 
 	Q_DECLARE_TR_FUNCTIONS(lcModel);
+
+	BVHNode* mBVHRootNode = nullptr;
+	std::vector<BVHLeafNode> mBVHLeafNodes;
 };

@@ -14,6 +14,7 @@
 #include "lc_traintrack.h"
 #include "lc_file.h"
 #include <locale.h>
+#include <chrono>
 
 PieceInfo::PieceInfo()
 {
@@ -84,8 +85,15 @@ void PieceInfo::SetModel(lcModel* Model, bool UpdateMesh, Project* CurrentProjec
 		lcLibraryMeshData MeshData;
 		PieceFile.Seek(0, SEEK_SET);
 
-		lcMeshLoader MeshLoader(MeshData, true, CurrentProject, SearchProjectFolder);
+		auto start = std::chrono::high_resolution_clock::now();
+
+		lcMeshLoader MeshLoader(MeshData, true, CurrentProject, SearchProjectFolder); // debug: slow when optimize is set to true: 10 billion itterrations in Addvertex to find nearby point
 		const bool Ret = MeshLoader.LoadMesh(PieceFile, LC_MESHDATA_SHARED);
+		
+		auto end = std::chrono::high_resolution_clock::now();
+		auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+		printf("Time for MeshLoader creation and LoadMesh: %lld microseconds\n", duration.count());
+
 
 		if (Ret && !MeshData.IsEmpty())
 			SetMesh(MeshData.CreateMesh());
@@ -240,6 +248,7 @@ bool PieceInfo::MinIntersectDist(const lcVector3& Start, const lcVector3& End, f
 		}
 	}
 
+	
 	return Intersect;
 }
 

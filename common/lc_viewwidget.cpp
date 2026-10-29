@@ -87,7 +87,20 @@ void lcViewWidget::resizeGL(int Width, int Height)
 
 void lcViewWidget::paintGL()
 {
+	
+	auto start = std::chrono::high_resolution_clock::now();
+
 	mView->OnDraw();
+
+	
+	auto end = std::chrono::high_resolution_clock::now();
+
+	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+
+	printf("Time for paintGL() -> mView->OnDraw(): %lld microseconds\n", duration.count());
+
+
+
 }
 
 void lcViewWidget::focusInEvent(QFocusEvent* FocusEvent)

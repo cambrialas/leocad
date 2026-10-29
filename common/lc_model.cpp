@@ -27,6 +27,9 @@
 #include "lc_previewwidget.h"
 #include "lc_findreplacewidget.h"
 
+#include <iostream>
+#include <chrono>
+
 void lcModelProperties::LoadDefaults()
 {
 	mAuthor = lcGetProfileString(LC_PROFILE_DEFAULT_AUTHOR_NAME);
@@ -761,6 +764,8 @@ void lcModel::LoadLDraw(QIODevice& Device, Project* Project)
 					continue;
 				}
 
+				std::cout << "Piece load: " << Piece->GetName().toStdString() << "\n";
+				
 				AddPiece(Piece);
 				Piece = nullptr;
 			}
@@ -773,6 +778,8 @@ void lcModel::LoadLDraw(QIODevice& Device, Project* Project)
 
 		FirstLine = false;
 	}
+
+	BuildBVHTree();
 
 	mCurrentStep = CurrentStep;
 	CalculateStep(mCurrentStep);
@@ -1644,11 +1651,142 @@ void lcModel::SaveStepImages(const QString& BaseName, bool AddStepSuffix, bool Z
 	}
 }
 
+
+
+
+
+
+
+
+
+bool RayIntersectsAABB(const Ray& ray, const lcBoundingBox& box, float tMax = FLT_MAX) {
+    
+	float tMin = 0.0f;
+    float tMaxLocal = tMax;
+
+    // For each axis
+    for (int i = 0; i < 3; ++i) {
+        float t1 = (box.Min[i] - ray.origin[i]) * ray.invDir[i];
+        float t2 = (box.Max[i] - ray.origin[i]) * ray.invDir[i];
+
+        // Make t1 be entry, t2 be exit
+        if (ray.invDir[i] < 0.0f)
+            std::swap(t1, t2);
+
+        tMin = std::max(tMin, t1);
+        tMaxLocal = std::min(tMaxLocal, t2);
+
+        if (tMin > tMaxLocal)
+            return false;  // no overlap on this axis → miss
+    }
+
+    return true;  // ray enters box at tMin, exits at tMaxLocal
+}
+
+
+// Returns the distance t where the ray FIRST enters the AABB.
+// Returns FLT_MAX if no intersection (miss or completely behind ray origin).
+// Returns 0.0f or negative if ray origin is inside the box (we usually clamp to 0).
+inline float lcModel::RayAABBEntryDistance(const Ray& ray, const lcBoundingBox& aabb) const
+{
+    // Use the precomputed invDir and sign from the Ray struct
+    // (see previous fast slab method)
+
+    float tMinX = ( (ray.sign[0] ? aabb.Max.x : aabb.Min.x) - ray.origin.x ) * ray.invDir.x;
+    float tMaxX = ( (ray.sign[0] ? aabb.Min.x : aabb.Max.x) - ray.origin.x ) * ray.invDir.x;
+
+    float tMinY = ( (ray.sign[1] ? aabb.Max.y : aabb.Min.y) - ray.origin.y ) * ray.invDir.y;
+    float tMaxY = ( (ray.sign[1] ? aabb.Min.y : aabb.Max.y) - ray.origin.y ) * ray.invDir.y;
+
+    float tMinZ = ( (ray.sign[2] ? aabb.Max.z : aabb.Min.z) - ray.origin.z ) * ray.invDir.z;
+    float tMaxZ = ( (ray.sign[2] ? aabb.Min.z : aabb.Max.z) - ray.origin.z ) * ray.invDir.z;
+
+    // The entry distance is the maximum of the three slab entry distances
+    float tEnter = std::max({ tMinX, tMinY, tMinZ });
+
+    // The exit distance is the minimum of the three slab exit distances
+    float tExit  = std::min({ tMaxX, tMaxY, tMaxZ });
+
+    // No hit if entry > exit or exit < 0 (completely behind ray)
+    if (tEnter > tExit || tExit < 0.0f)
+        return FLT_MAX;
+
+    // Clamp negative tEnter to 0 (origin inside or behind, but we consider hit at 0)
+    if(tEnter < 0.0f)
+		return 0.0f; // ray starts inside box
+	
+	// Convert parametric t to real Euclidean distance    
+    return tEnter * ray.rayLength;
+
+}
+
+
+void lcModel::TraverseBVH(BVHNode* bvhNode, const Ray& ray, lcObjectRayTest& ObjectRayTest) const
+{
+    if (!RayIntersectsAABB(ray, bvhNode->bounds))  // quick reject
+        return;
+
+    if (bvhNode->isLeaf)
+    {
+		BVHLeafNode bvhLeafNode = mBVHLeafNodes[bvhNode->BVHLeafNodesIndex];
+		
+		lcPiece* piece = mPieces[bvhLeafNode.mPiecesIndex].get();
+		
+		piece->RayTest(ObjectRayTest);
+        
+        return;
+    }
+
+    // Compute entry distances to both children
+    float tLeft  = RayAABBEntryDistance(ray, bvhNode->leftNode->bounds);
+    float tRight = RayAABBEntryDistance(ray, bvhNode->rightNode->bounds);
+
+    // Visit nearer child first
+    BVHNode* near  = (tLeft < tRight) ? bvhNode->leftNode : bvhNode->rightNode;
+    BVHNode* far   = (tLeft < tRight) ? bvhNode->rightNode : bvhNode->leftNode;
+    //float tNear = std::min(tLeft, tRight);
+    float tFar  = std::max(tLeft, tRight);
+
+    TraverseBVH(near, ray, ObjectRayTest);
+
+    // Only traverse far child if we might find a closer hit
+    if (ObjectRayTest.Distance > tFar || ObjectRayTest.Distance == FLT_MAX)
+        TraverseBVH(far, ray, ObjectRayTest);
+}
+
+
 void lcModel::RayTest(lcObjectRayTest& ObjectRayTest) const
 {
-	for (const std::unique_ptr<lcPiece>& Piece : mPieces)
+	std::cout << "Ray start: " << ObjectRayTest.Start.x << ", " << ObjectRayTest.Start.y << ", " << ObjectRayTest.Start.z << "\n";
+	std::cout << "Ray end: " << ObjectRayTest.End.x << ", " << ObjectRayTest.End.y << ", " << ObjectRayTest.End.z << "\n";
+
+	std::cout << mPieces.size() << std::endl;
+
+	auto start = std::chrono::high_resolution_clock::now();
+
+	// -- Init ray --
+	// Precompute this when creating the ray (saves divisions!)	
+	Ray ray;	
+	ray.origin = ObjectRayTest.Start;  // Origin
+	ray.direction = ObjectRayTest.End - ObjectRayTest.Start;  // Direction
+    ray.invDir = lcVector3(1.0f / ray.direction.x, 1.0f / ray.direction.y, 1.0f / ray.direction.z);
+    ray.sign[0] = (ray.invDir.x < 0);
+    ray.sign[1] = (ray.invDir.y < 0);
+    ray.sign[2] = (ray.invDir.z < 0);
+	ray.rayLength = lcLength(ray.direction);
+	
+
+	TraverseBVH(this->mBVHRootNode, ray, ObjectRayTest);
+
+	
+	/*for (const std::unique_ptr<lcPiece>& Piece : mPieces)
 		if (Piece->IsVisible(mCurrentStep) && (!ObjectRayTest.IgnoreSelected || !Piece->IsSelected()))
-			Piece->RayTest(ObjectRayTest);
+			Piece->RayTest(ObjectRayTest);*/
+	
+	
+	auto end = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+	std::cout << "RayTest pieces time: " << duration.count() << " microseconds" << std::endl;
 
 	if (ObjectRayTest.PiecesOnly)
 		return;
@@ -2360,16 +2498,31 @@ lcPiece* lcModel::AddPiece(PieceInfo* Info, quint32 Section)
 
 void lcModel::AddPiece(lcPiece* Piece)
 {
-	for (size_t PieceIndex = 0; PieceIndex < mPieces.size(); PieceIndex++)
-	{
-		if (mPieces[PieceIndex]->GetStepShow() > Piece->GetStepShow())
+		
+	std::cout << "Insert piece with step show, piece no: " << mPieces.size() << "\n";
+
+	if(Piece->mPieceInfo != nullptr)
+		Piece->UpdateAABBFromInfo();
+
+
+	if(mPieces.size() > 0 && Piece->GetStepShow() >= mPieces[mPieces.size() - 1]->GetStepShow()) {
+		InsertPiece(Piece, mPieces.size());
+	}
+	else {
+
+		for (size_t PieceIndex = 0; PieceIndex < mPieces.size(); PieceIndex++)
 		{
-			InsertPiece(Piece, PieceIndex);
-			return;
+			if (mPieces[PieceIndex]->GetStepShow() > Piece->GetStepShow())
+			{
+				InsertPiece(Piece, PieceIndex);
+				return;
+			}
 		}
+
+		InsertPiece(Piece, mPieces.size());
+
 	}
 
-	InsertPiece(Piece, mPieces.size());
 }
 
 void lcModel::InsertPiece(lcPiece* Piece, size_t Index)
@@ -2386,6 +2539,125 @@ void lcModel::InsertPiece(lcPiece* Piece, size_t Index)
 
 	mPieces.insert(mPieces.begin() + Index, std::unique_ptr<lcPiece>(Piece));
 }
+
+
+
+void lcModel::BuildBVHTree() {
+
+	mBVHLeafNodes.reserve(mPieces.size());
+
+	for(long unsigned int i = 0; i < mPieces.size(); i++) {
+	
+		mPieces[i].get()->UpdateAABBFromInfo();
+
+		BVHLeafNode leafNode;
+		leafNode.mPiecesIndex = i;
+		
+		leafNode.bounds = *(mPieces[i].get()->mAABoundingBox);
+
+		lcBoundingBox pieceAABB = leafNode.bounds; 
+		leafNode.centroid = (pieceAABB.Min + pieceAABB.Max) * 0.5f;
+
+		mBVHLeafNodes.push_back(leafNode);
+
+	}
+
+	if(mBVHLeafNodes.size() > 0)
+		mBVHRootNode = BuildBVHNode(0, mBVHLeafNodes.size());
+
+	/* BVHNode* inspectNode;
+
+	inspectNode = BVHRootNode;
+	std::cout << "BVHRootNode created: " << inspectNode << std::endl;
+	if (inspectNode) {
+		std::cout << "BVHRootNode->isLeaf: " << inspectNode->isLeaf << std::endl;
+		std::cout << "BVHRootNode->bounds.Min: " << inspectNode->bounds.Min.x << ", " << inspectNode->bounds.Min.y << ", " << inspectNode->bounds.Min.z << std::endl;
+		std::cout << "BVHRootNode->bounds.Max: " << inspectNode->bounds.Max.x << ", " << inspectNode->bounds.Max.y << ", " << inspectNode->bounds.Max.z << std::endl;
+	}
+	
+	inspectNode = BVHRootNode->leftNode;
+	std::cout << "BVHRootNode created: " << inspectNode << std::endl;
+	if (inspectNode) {
+		std::cout << "BVHRootNode->isLeaf: " << inspectNode->isLeaf << std::endl;
+		std::cout << "BVHRootNode->bounds.Min: " << inspectNode->bounds.Min.x << ", " << inspectNode->bounds.Min.y << ", " << inspectNode->bounds.Min.z << std::endl;
+		std::cout << "BVHRootNode->bounds.Max: " << inspectNode->bounds.Max.x << ", " << inspectNode->bounds.Max.y << ", " << inspectNode->bounds.Max.z << std::endl;
+	}
+
+	inspectNode = BVHRootNode->rightNode;	
+	std::cout << "BVHRootNode created: " << inspectNode << std::endl;
+	if (inspectNode) {
+		std::cout << "BVHRootNode->isLeaf: " << inspectNode->isLeaf << std::endl;
+		std::cout << "BVHRootNode->bounds.Min: " << inspectNode->bounds.Min.x << ", " << inspectNode->bounds.Min.y << ", " << inspectNode->bounds.Min.z << std::endl;
+		std::cout << "BVHRootNode->bounds.Max: " << inspectNode->bounds.Max.x << ", " << inspectNode->bounds.Max.y << ", " << inspectNode->bounds.Max.z << std::endl;
+	}*/
+
+	
+}
+
+BVHNode* lcModel::BuildBVHNode(long unsigned int startIndex, long unsigned int endIndex) {
+	
+	BVHNode* bvhNode = new BVHNode();
+
+	if((endIndex - startIndex) == 1) {
+
+		bvhNode->bounds = mBVHLeafNodes[startIndex].bounds;
+		bvhNode->BVHLeafNodesIndex = startIndex;
+		bvhNode->isLeaf = true;
+
+		return bvhNode;
+
+	}
+	
+	bvhNode->isLeaf = false;
+
+	//Find bounding box
+	bvhNode->bounds.Max.x = -FLT_MAX;bvhNode->bounds.Max.y = -FLT_MAX;bvhNode->bounds.Max.z = -FLT_MAX;
+	bvhNode->bounds.Min.x = FLT_MAX;bvhNode->bounds.Min.y = FLT_MAX;bvhNode->bounds.Min.z = FLT_MAX;
+
+	for(long unsigned int i = startIndex; i < endIndex; i++) {
+		
+		lcBoundingBox pieceAABB = mBVHLeafNodes[i].bounds;
+		
+		bvhNode->bounds.Min.x = std::min(bvhNode->bounds.Min.x, pieceAABB.Min.x);
+		bvhNode->bounds.Min.y = std::min(bvhNode->bounds.Min.y, pieceAABB.Min.y);
+		bvhNode->bounds.Min.z = std::min(bvhNode->bounds.Min.z, pieceAABB.Min.z);
+
+		bvhNode->bounds.Max.x = std::max(bvhNode->bounds.Max.x, pieceAABB.Max.x);
+		bvhNode->bounds.Max.y = std::max(bvhNode->bounds.Max.y, pieceAABB.Max.y);
+		bvhNode->bounds.Max.z = std::max(bvhNode->bounds.Max.z, pieceAABB.Max.z);																
+	}
+
+
+	//Longest axis
+	lcVector3 axis_lengths;
+	axis_lengths[0] = bvhNode->bounds.Max[0] - bvhNode->bounds.Min[0];
+	axis_lengths[1] = bvhNode->bounds.Max[1] - bvhNode->bounds.Min[1];
+	axis_lengths[2] = bvhNode->bounds.Max[2] - bvhNode->bounds.Min[2];
+
+	int longest_axis = 0; // x = 0, y = 1, z = 2
+	
+	if(axis_lengths[1] > axis_lengths[0]) longest_axis = 1;
+	
+	if(axis_lengths[2] > axis_lengths[longest_axis]) longest_axis = 2;
+
+
+	// Sort by centroid
+	std::sort(mBVHLeafNodes.begin() + startIndex, mBVHLeafNodes.begin() + endIndex,[longest_axis](const BVHLeafNode& a, const BVHLeafNode& b)
+              {
+                  return a.centroid[longest_axis] < b.centroid[longest_axis];
+              });
+
+
+	long unsigned int splitIndex = startIndex + ((endIndex - startIndex) / 2);
+	
+	bvhNode->leftNode = BuildBVHNode(startIndex, splitIndex);
+
+	bvhNode->rightNode = BuildBVHNode(splitIndex, endIndex);
+
+	return bvhNode;
+
+}
+
 
 void lcModel::FocusNextTrainTrack()
 {
@@ -4768,7 +5040,7 @@ void lcModel::UpdateRotateTool(const lcVector3& Angles, bool AlternateButtonDrag
 	const lcVector3 Delta = SnapRotation(Angles) - SnapRotation(mMouseToolDistance);
 	RotateSelectedObjects(Delta, true, AlternateButtonDrag, false, false);
 
-	mMouseToolDistance = Angles;
+ 	mMouseToolDistance = Angles;
 	mMouseToolFirstMove = false;
 
 	gMainWindow->UpdateSelectedObjects(false);

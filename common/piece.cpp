@@ -566,7 +566,12 @@ void lcPiece::DrawInterface(lcContext* Context, const lcScene& Scene) const
 		{ Min[0], Min[1], Min[2] }, { Min[0], Min[1], Min[2] + Edge[2] },
 	};
 
-	const lcMatrix44 WorldMatrix = Scene.ApplyActiveSubmodelTransform(mModelWorld);
+	lcMatrix44 WorldMatrix;
+	if(mAABoundingBox != nullptr)
+		WorldMatrix = Scene.ApplyActiveSubmodelTransform(lcMatrix44Identity());
+	else
+		WorldMatrix = Scene.ApplyActiveSubmodelTransform(mModelWorld);
+
 	Context->SetMaterial(lcMaterialType::UnlitColor);
 	Context->SetWorldMatrix(WorldMatrix);
 
@@ -937,6 +942,7 @@ void lcPiece::AddMainModelRenderMeshes(lcScene* Scene, bool Highlight, bool Fade
 
 	if (RenderMeshState == lcRenderMeshState::Focused || RenderMeshState == lcRenderMeshState::Selected)
 		Scene->AddInterfaceObject(this);
+		
 }
 
 void lcPiece::AddSubModelRenderMeshes(lcScene* Scene, const lcMatrix44& WorldMatrix, int DefaultColorIndex, lcRenderMeshState RenderMeshState, bool ParentActive) const
@@ -1031,6 +1037,11 @@ void lcPiece::Rotate(lcStep Step, bool AddKey, const lcMatrix33& RotationMatrix,
 
 		SetPosition(Center + Distance, Step, AddKey);
 		SetRotation(NewLocalToWorldMatrix, Step, AddKey);
+
+		UpdatePosition(Step);
+
+		UpdateAABBFromInfo();
+
 	}
 	else if (Section >= LC_PIECE_SECTION_CONTROL_POINT_FIRST)
 	{
@@ -1051,6 +1062,29 @@ void lcPiece::Rotate(lcStep Step, bool AddKey, const lcMatrix33& RotationMatrix,
 
 		UpdateMesh();
 	}
+}
+
+void lcPiece::UpdateAABBFromInfo() {
+
+		lcBoundingBox localBox = mPieceInfo->GetBoundingBox();
+		lcVector3 corners[8];		
+		lcGetBoxCorners(localBox, corners);
+
+		lcVector3 worldMin(FLT_MAX, FLT_MAX, FLT_MAX);
+		lcVector3 worldMax(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+		
+		for (int i = 0; i < 8; ++i)
+		{
+			lcVector3 worldPoint = lcMul31(corners[i], mModelWorld);
+			worldMin = lcMin(worldMin, worldPoint);
+			worldMax = lcMax(worldMax, worldPoint);
+		}
+
+		mAABoundingBox = new lcBoundingBox();
+		
+		mAABoundingBox->Min = worldMin;
+		mAABoundingBox->Max = worldMax;
+
 }
 
 void lcPiece::MovePivotPoint(const lcVector3& Distance)
@@ -1331,11 +1365,20 @@ void lcPiece::GetModelParts(const lcMatrix44& WorldMatrix, int DefaultColorIndex
 
 const lcBoundingBox& lcPiece::GetBoundingBox() const
 {
-	if (!mMesh)
-		return mPieceInfo->GetBoundingBox();
-	else
-		return mMesh->mBoundingBox;
+	if(mAABoundingBox != nullptr) {
+
+		return *mAABoundingBox;
+
+	}
+	else {
+	
+		if (!mMesh)
+			return mPieceInfo->GetBoundingBox();
+		else
+			return mMesh->mBoundingBox;
+	}
 }
+
 
 void lcPiece::CompareBoundingBox(lcVector3& Min, lcVector3& Max) const
 {

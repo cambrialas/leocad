@@ -5,6 +5,7 @@
 #include "lc_library.h"
 #include "lc_application.h"
 #include "lc_texture.h"
+#include <iostream>
 
 static void lcCheckTexCoordsWrap(const lcVector4& Plane2, const lcVector3 (&Positions)[3], lcVector2 (&TexCoords)[3])
 {
@@ -164,17 +165,60 @@ lcMeshLoaderSection* lcMeshLoaderTypeData::AddSection(lcMeshPrimitiveType Primit
 	return mSections.back().get();
 }
 
+inline int32_t quantize(float value, float cellSize = 0.01f) {
+    return static_cast<int32_t>(std::floor(value / cellSize));
+}
+
+/*
+
+uint32_t addOrGetVertex(const Vertex& v) {
+    GridKey key{
+        quantize(v.x, 0.01f),
+        quantize(v.y, 0.01f),
+        quantize(v.z, 0.01f)
+    };
+
+    if (auto it = spatialMap.find(key); it != spatialMap.end()) {
+        // Optional: here you can still do exact distance check with few candidates
+        // but in most cases with ε=0.01 it's not necessary
+        return it->second;
+    }
+
+    uint32_t idx = finalVertices.size();
+    finalVertices.push_back(v);
+    spatialMap[key] = idx;
+    return idx;
+}
+
+*/
+
+
 quint32 lcMeshLoaderTypeData::AddVertex(const lcVector3& Position, bool Optimize)
 {
+
+	GridKey key{
+		quantize(Position.x, 0.01f),
+		quantize(Position.y, 0.01f),
+		quantize(Position.z, 0.01f)
+	};		
+
+
 	if (Optimize)
 	{
-		for (int VertexIdx = static_cast<int>(mVertices.size()) - 1; VertexIdx >= 0; VertexIdx--)
+
+		
+		if (auto it = spatialMap.find(key); it != spatialMap.end()) { 
+			return it->second;
+		}
+		
+		
+		/*for (int VertexIdx = static_cast<int>(mVertices.size()) - 1; VertexIdx >= 0; VertexIdx--)
 		{
 			const lcMeshLoaderVertex& Vertex = mVertices[VertexIdx];
 
 			if (lcCompareVertices(Position, Vertex.Position))
 				return VertexIdx;
-		}
+		}*/
 	}
 
 	lcMeshLoaderVertex& Vertex = mVertices.emplace_back();
@@ -183,32 +227,50 @@ quint32 lcMeshLoaderTypeData::AddVertex(const lcVector3& Position, bool Optimize
 	Vertex.Normal = lcVector3(0.0f, 0.0f, 0.0f);
 	Vertex.NormalWeight = 0.0f;
 
+	spatialMap[key] = mVertices.size() - 1;
+
 	return static_cast<quint32>(mVertices.size()) - 1;
 }
 
+static unsigned long int debug_Optimze_iterrations = 0;
+
 quint32 lcMeshLoaderTypeData::AddVertex(const lcVector3& Position, const lcVector3& Normal, float NormalWeight, bool Optimize)
 {
+	GridKey key{
+		quantize(Position.x, 0.01f),
+		quantize(Position.y, 0.01f),
+		quantize(Position.z, 0.01f)
+	};
+
 	if (Optimize)
 	{
-		for (int VertexIdx = static_cast<int>(mVertices.size()) - 1; VertexIdx >= 0; VertexIdx--)
-		{
-			lcMeshLoaderVertex& Vertex = mVertices[VertexIdx];
+		
+		if (auto it = spatialMap.find(key); it != spatialMap.end()) { 
+			
+			int VertexIdx = it->second;
+		
+			//for (int VertexIdx = static_cast<int>(mVertices.size()) - 1; VertexIdx >= 0; VertexIdx--)		
+			//{
 
-			if (lcCompareVertices(Position, Vertex.Position))
+			debug_Optimze_iterrations++;
+			
+			lcMeshLoaderVertex& Vertex = mVertices[VertexIdx];
+			
+			//if (lcCompareVertices(Position, Vertex.Position))
+			//{
+			if (Vertex.NormalWeight == 0.0f)
 			{
-				if (Vertex.NormalWeight == 0.0f)
-				{
-					Vertex.Normal = Normal;
-					Vertex.NormalWeight = NormalWeight;
-					return VertexIdx;
-				}
-				else if (lcDot(Normal, Vertex.Normal) > 0.71f)
-				{
-					Vertex.Normal = lcNormalize(Vertex.Normal * Vertex.NormalWeight + Normal * NormalWeight);
-					Vertex.NormalWeight += NormalWeight;
-					return VertexIdx;
-				}
+				Vertex.Normal = Normal;
+				Vertex.NormalWeight = NormalWeight;
+				return VertexIdx;
 			}
+			else if (lcDot(Normal, Vertex.Normal) > 0.71f)
+			{
+				Vertex.Normal = lcNormalize(Vertex.Normal * Vertex.NormalWeight + Normal * NormalWeight);
+				Vertex.NormalWeight += NormalWeight;
+				return VertexIdx;
+			}
+			//}
 		}
 	}
 
@@ -217,6 +279,8 @@ quint32 lcMeshLoaderTypeData::AddVertex(const lcVector3& Position, const lcVecto
 	Vertex.Position = Position;
 	Vertex.Normal = Normal;
 	Vertex.NormalWeight = 1.0f;
+
+	spatialMap[key] = mVertices.size() - 1;
 
 	return static_cast<quint32>(mVertices.size()) - 1;
 }
@@ -1380,6 +1444,8 @@ bool lcMeshLoader::ReadMeshData(lcFile& File, const lcMatrix44& CurrentTransform
 				else if (*Ch == '\\')
 					*Ch = '/';
 			}
+
+			std::cout << FileName << "\n";
 
 			lcLibraryPrimitive* Primitive = !TextureMap ? Library->FindPrimitive(FileName) : nullptr;
 			lcMatrix44 IncludeTransform(lcVector4(fm[3], fm[6], fm[9], 0.0f), lcVector4(fm[4], fm[7], fm[10], 0.0f), lcVector4(fm[5], fm[8], fm[11], 0.0f), lcVector4(fm[0], fm[1], fm[2], 1.0f));

@@ -25,6 +25,8 @@
 #include "lc_colors.h"
 #include "lc_previewwidget.h"
 
+#include <iostream>
+
 #if LC_ENABLE_GAMEPAD
 #include <QtGamepad/QGamepad>
 #endif
@@ -133,264 +135,276 @@ void lcMainWindow::CreateWidgets()
 
 void lcMainWindow::CreateActions()
 {
+	std::cout << this->actions().size() << "\n";
+
+	
 	for (int CommandIdx = 0; CommandIdx < LC_NUM_COMMANDS; CommandIdx++)
 	{
 		QAction* Action = new QAction(qApp->translate("Menu", gCommands[CommandIdx].MenuName), this);
+		Action->setData(CommandIdx);
 		Action->setStatusTip(qApp->translate("Status", gCommands[CommandIdx].StatusText));
 		connect(Action, SIGNAL(triggered()), this, SLOT(ActionTriggered()));
 		addAction(Action);
 		mActions[CommandIdx] = Action;
 	}
 
-	mActions[LC_FILE_NEW]->setToolTip(tr("New Model"));
-	mActions[LC_FILE_OPEN]->setToolTip(tr("Open Model"));
-	mActions[LC_FILE_SAVE]->setToolTip(tr("Save Model"));
+	std::cout << this->actions().size() << "\n";
+
+	QList<QAction*> allActions = this->actions();
+
+	int numOfActions = allActions.size();
+
+	allActions[LC_FILE_NEW]->setToolTip(tr("New Model"));
+	allActions[LC_FILE_OPEN]->setToolTip(tr("Open Model"));
+	allActions[LC_FILE_SAVE]->setToolTip(tr("Save Model"));
 
 	QIcon FileNewIcon;
 	FileNewIcon.addFile(":/resources/file_new.png");
 	FileNewIcon.addFile(":/resources/file_new_16.png");
-	mActions[LC_FILE_NEW]->setIcon(FileNewIcon);
+	allActions[LC_FILE_NEW]->setIcon(FileNewIcon);
 
 	QIcon FileSaveIcon;
 	FileSaveIcon.addFile(":/resources/file_save.png");
 	FileSaveIcon.addFile(":/resources/file_save_16.png");
-	mActions[LC_FILE_SAVE]->setIcon(FileSaveIcon);
+	allActions[LC_FILE_SAVE]->setIcon(FileSaveIcon);
 
 	QIcon FileOpenIcon;
 	FileOpenIcon.addFile(":/resources/file_open.png");
 	FileOpenIcon.addFile(":/resources/file_open_16.png");
-	mActions[LC_FILE_OPEN]->setIcon(FileOpenIcon);
+	allActions[LC_FILE_OPEN]->setIcon(FileOpenIcon);
 
 	QIcon FilePrintIcon;
 	FilePrintIcon.addFile(":/resources/file_print.png");
 	FilePrintIcon.addFile(":/resources/file_print_16.png");
-	mActions[LC_FILE_PRINT]->setIcon(FilePrintIcon);
+	allActions[LC_FILE_PRINT]->setIcon(FilePrintIcon);
 
 	QIcon FilePrintPreviewIcon;
 	FilePrintPreviewIcon.addFile(":/resources/file_print_preview.png");
 	FilePrintPreviewIcon.addFile(":/resources/file_print_preview_16.png");
-	mActions[LC_FILE_PRINT_PREVIEW]->setIcon(FilePrintPreviewIcon);
+	allActions[LC_FILE_PRINT_PREVIEW]->setIcon(FilePrintPreviewIcon);
 
 	QIcon EditUndoIcon;
 	EditUndoIcon.addFile(":/resources/edit_undo.png");
 	EditUndoIcon.addFile(":/resources/edit_undo_16.png");
-	mActions[LC_EDIT_UNDO]->setIcon(EditUndoIcon);
+	allActions[LC_EDIT_UNDO]->setIcon(EditUndoIcon);
 
 	QIcon EditRedoIcon;
 	EditRedoIcon.addFile(":/resources/edit_redo.png");
 	EditRedoIcon.addFile(":/resources/edit_redo_16.png");
-	mActions[LC_EDIT_REDO]->setIcon(EditRedoIcon);
+	allActions[LC_EDIT_REDO]->setIcon(EditRedoIcon);
 
 	QIcon EditCutIcon;
 	EditCutIcon.addFile(":/resources/edit_cut.png");
 	EditCutIcon.addFile(":/resources/edit_cut_16.png");
-	mActions[LC_EDIT_CUT]->setIcon(EditCutIcon);
+	allActions[LC_EDIT_CUT]->setIcon(EditCutIcon);
 
 	QIcon EditCopyIcon;
 	EditCopyIcon.addFile(":/resources/edit_copy.png");
 	EditCopyIcon.addFile(":/resources/edit_copy_16.png");
-	mActions[LC_EDIT_COPY]->setIcon(EditCopyIcon);
+	allActions[LC_EDIT_COPY]->setIcon(EditCopyIcon);
 
 	QIcon EditPasteIcon;
 	EditPasteIcon.addFile(":/resources/edit_paste.png");
 	EditPasteIcon.addFile(":/resources/edit_paste_16.png");
-	mActions[LC_EDIT_PASTE]->setIcon(EditPasteIcon);
+	allActions[LC_EDIT_PASTE]->setIcon(EditPasteIcon);
 
 	QIcon EditActionInsertIcon;
 	EditActionInsertIcon.addFile(":/resources/action_insert.png");
 	EditActionInsertIcon.addFile(":/resources/action_insert_16.png");
-	mActions[LC_EDIT_ACTION_INSERT]->setIcon(EditActionInsertIcon);
+	allActions[LC_EDIT_ACTION_INSERT]->setIcon(EditActionInsertIcon);
 
 	QIcon EditActionLightIcon;
 	EditActionLightIcon.addFile(":/resources/action_light.png");
 	EditActionLightIcon.addFile(":/resources/action_light_16.png");
-	mActions[LC_EDIT_ACTION_POINT_LIGHT]->setIcon(EditActionLightIcon);
+	allActions[LC_EDIT_ACTION_POINT_LIGHT]->setIcon(EditActionLightIcon);
 
 	QIcon EditActionSpotLightIcon;
 	EditActionSpotLightIcon.addFile(":/resources/action_spotlight.png");
 	EditActionSpotLightIcon.addFile(":/resources/action_spotlight_16.png");
-	mActions[LC_EDIT_ACTION_SPOTLIGHT]->setIcon(EditActionSpotLightIcon);
+	allActions[LC_EDIT_ACTION_SPOTLIGHT]->setIcon(EditActionSpotLightIcon);
 
 	QIcon EditActionSunlightIcon;
 	EditActionSunlightIcon.addFile(":/resources/action_sunlight.png");
 	EditActionSunlightIcon.addFile(":/resources/action_sunlight_16.png");
-	mActions[LC_EDIT_ACTION_DIRECTIONAL_LIGHT]->setIcon(EditActionSunlightIcon);
+	allActions[LC_EDIT_ACTION_DIRECTIONAL_LIGHT]->setIcon(EditActionSunlightIcon);
 
 	QIcon EditActionArealightIcon;
 	EditActionArealightIcon.addFile(":/resources/action_arealight.png");
 	EditActionArealightIcon.addFile(":/resources/action_arealight_16.png");
-	mActions[LC_EDIT_ACTION_AREA_LIGHT]->setIcon(EditActionArealightIcon);
+	allActions[LC_EDIT_ACTION_AREA_LIGHT]->setIcon(EditActionArealightIcon);
 
 	QIcon EditActionSelectIcon;
 	EditActionSelectIcon.addFile(":/resources/action_select.png");
 	EditActionSelectIcon.addFile(":/resources/action_select_16.png");
-	mActions[LC_EDIT_ACTION_SELECT]->setIcon(EditActionSelectIcon);
+	allActions[LC_EDIT_ACTION_SELECT]->setIcon(EditActionSelectIcon);
 
 	QIcon EditActionMoveIcon;
 	EditActionMoveIcon.addFile(":/resources/action_move.png");
 	EditActionMoveIcon.addFile(":/resources/action_move_16.png");
-	mActions[LC_EDIT_ACTION_MOVE]->setIcon(EditActionMoveIcon);
+	allActions[LC_EDIT_ACTION_MOVE]->setIcon(EditActionMoveIcon);
 
 	QIcon EditActionRotateIcon;
 	EditActionRotateIcon.addFile(":/resources/action_rotate.png");
 	EditActionRotateIcon.addFile(":/resources/action_rotate_16.png");
-	mActions[LC_EDIT_ACTION_ROTATE]->setIcon(EditActionRotateIcon);
+	allActions[LC_EDIT_ACTION_ROTATE]->setIcon(EditActionRotateIcon);
 
 	QIcon EditActionDeleteIcon;
 	EditActionDeleteIcon.addFile(":/resources/action_delete.png");
 	EditActionDeleteIcon.addFile(":/resources/action_delete_16.png");
-	mActions[LC_EDIT_ACTION_DELETE]->setIcon(EditActionDeleteIcon);
+	allActions[LC_EDIT_ACTION_DELETE]->setIcon(EditActionDeleteIcon);
 
 	QIcon EditActionPaintIcon;
 	EditActionPaintIcon.addFile(":/resources/action_paint.png");
 	EditActionPaintIcon.addFile(":/resources/action_paint_16.png");
-	mActions[LC_EDIT_ACTION_PAINT]->setIcon(EditActionPaintIcon);
+	allActions[LC_EDIT_ACTION_PAINT]->setIcon(EditActionPaintIcon);
 
 	QIcon EditActionColorPickerIcon;
 	EditActionColorPickerIcon.addFile(":/resources/action_color_picker.png");
 	EditActionColorPickerIcon.addFile(":/resources/action_color_picker_16.png");
-	mActions[LC_EDIT_ACTION_COLOR_PICKER]->setIcon(EditActionColorPickerIcon);
+	allActions[LC_EDIT_ACTION_COLOR_PICKER]->setIcon(EditActionColorPickerIcon);
 
 	QIcon EditActionZoomIcon;
 	EditActionZoomIcon.addFile(":/resources/action_zoom.png");
 	EditActionZoomIcon.addFile(":/resources/action_zoom_16.png");
-	mActions[LC_EDIT_ACTION_ZOOM]->setIcon(EditActionZoomIcon);
+	allActions[LC_EDIT_ACTION_ZOOM]->setIcon(EditActionZoomIcon);
 
 	QIcon EditActionPanIcon;
 	EditActionPanIcon.addFile(":/resources/action_pan.png");
 	EditActionPanIcon.addFile(":/resources/action_pan_16.png");
-	mActions[LC_EDIT_ACTION_PAN]->setIcon(EditActionPanIcon);
+	allActions[LC_EDIT_ACTION_PAN]->setIcon(EditActionPanIcon);
 
 	QIcon FileRenderPOVRayIcon;
 	FileRenderPOVRayIcon.addFile(":/resources/file_render_povray.png");
 	FileRenderPOVRayIcon.addFile(":/resources/file_render_povray_16.png");
-	mActions[LC_FILE_RENDER_POVRAY]->setIcon(FileRenderPOVRayIcon);
+	allActions[LC_FILE_RENDER_POVRAY]->setIcon(FileRenderPOVRayIcon);
 
 	QIcon FileRenderBlenderIcon;
 	FileRenderBlenderIcon.addFile(":/resources/file_render_blender.png");
 	FileRenderBlenderIcon.addFile(":/resources/file_render_blender_16.png");
-	mActions[LC_FILE_RENDER_BLENDER]->setIcon(FileRenderBlenderIcon);
+	allActions[LC_FILE_RENDER_BLENDER]->setIcon(FileRenderBlenderIcon);
 
 	QIcon FileOpenInBlenderIcon;
 	FileOpenInBlenderIcon.addFile(":/resources/file_render_open_in_blender.png");
 	FileOpenInBlenderIcon.addFile(":/resources/file_render_open_in_blender_16.png");
-	mActions[LC_FILE_RENDER_OPEN_IN_BLENDER]->setIcon(FileOpenInBlenderIcon);
+	allActions[LC_FILE_RENDER_OPEN_IN_BLENDER]->setIcon(FileOpenInBlenderIcon);
 
-	mActions[LC_EDIT_ACTION_CAMERA]->setIcon(QIcon(":/resources/action_camera.png"));
-	mActions[LC_EDIT_ACTION_ROTATE_VIEW]->setIcon(QIcon(":/resources/action_rotate_view.png"));
-	mActions[LC_EDIT_ACTION_ROLL]->setIcon(QIcon(":/resources/action_roll.png"));
-	mActions[LC_EDIT_ACTION_ZOOM_REGION]->setIcon(QIcon(":/resources/action_zoom_region.png"));
-	mActions[LC_EDIT_FIND]->setIcon(QIcon(":/resources/edit_find.png"));
-	mActions[LC_EDIT_FIND_NEXT]->setIcon(QIcon(":/resources/edit_find_next.png"));
-	mActions[LC_EDIT_FIND_PREVIOUS]->setIcon(QIcon(":/resources/edit_find_previous.png"));
-	mActions[LC_EDIT_FIND_ALL]->setIcon(QIcon(":/resources/edit_find_all.png"));
-	mActions[LC_EDIT_REPLACE_NEXT]->setIcon(QIcon(":/resources/edit_replace_next.png"));
-	mActions[LC_EDIT_REPLACE_ALL]->setIcon(QIcon(":/resources/edit_replace_all.png"));
-	mActions[LC_PIECE_SHOW_EARLIER]->setIcon(QIcon(":/resources/piece_show_earlier.png"));
-	mActions[LC_PIECE_SHOW_LATER]->setIcon(QIcon(":/resources/piece_show_later.png"));
-	mActions[LC_VIEW_SPLIT_HORIZONTAL]->setIcon(QIcon(":/resources/view_split_horizontal.png"));
-	mActions[LC_VIEW_SPLIT_VERTICAL]->setIcon(QIcon(":/resources/view_split_vertical.png"));
-	mActions[LC_VIEW_ZOOM_IN]->setIcon(QIcon(":/resources/view_zoomin.png"));
-	mActions[LC_VIEW_ZOOM_OUT]->setIcon(QIcon(":/resources/view_zoomout.png"));
-	mActions[LC_VIEW_ZOOM_EXTENTS]->setIcon(QIcon(":/resources/view_zoomextents.png"));
-	mActions[LC_VIEW_TIME_FIRST]->setIcon(QIcon(":/resources/time_first.png"));
-	mActions[LC_VIEW_TIME_PREVIOUS]->setIcon(QIcon(":/resources/time_previous.png"));
-	mActions[LC_VIEW_TIME_NEXT]->setIcon(QIcon(":/resources/time_next.png"));
-	mActions[LC_VIEW_TIME_LAST]->setIcon(QIcon(":/resources/time_last.png"));
-	mActions[LC_VIEW_TIME_ADD_KEYS]->setIcon(QIcon(":/resources/time_add_keys.png"));
-	mActions[LC_HELP_HOMEPAGE]->setIcon(QIcon(":/resources/help_homepage.png"));
+	allActions[LC_EDIT_ACTION_CAMERA]->setIcon(QIcon(":/resources/action_camera.png"));
+	allActions[LC_EDIT_ACTION_ROTATE_VIEW]->setIcon(QIcon(":/resources/action_rotate_view.png"));
+	allActions[LC_EDIT_ACTION_ROLL]->setIcon(QIcon(":/resources/action_roll.png"));
+	allActions[LC_EDIT_ACTION_ZOOM_REGION]->setIcon(QIcon(":/resources/action_zoom_region.png"));
+	allActions[LC_EDIT_FIND]->setIcon(QIcon(":/resources/edit_find.png"));
+	allActions[LC_EDIT_FIND_NEXT]->setIcon(QIcon(":/resources/edit_find_next.png"));
+	allActions[LC_EDIT_FIND_PREVIOUS]->setIcon(QIcon(":/resources/edit_find_previous.png"));
+	allActions[LC_EDIT_FIND_ALL]->setIcon(QIcon(":/resources/edit_find_all.png"));
+	allActions[LC_EDIT_REPLACE_NEXT]->setIcon(QIcon(":/resources/edit_replace_next.png"));
+	allActions[LC_EDIT_REPLACE_ALL]->setIcon(QIcon(":/resources/edit_replace_all.png"));
+	allActions[LC_PIECE_SHOW_EARLIER]->setIcon(QIcon(":/resources/piece_show_earlier.png"));
+	allActions[LC_PIECE_SHOW_LATER]->setIcon(QIcon(":/resources/piece_show_later.png"));
+	allActions[LC_VIEW_SPLIT_HORIZONTAL]->setIcon(QIcon(":/resources/view_split_horizontal.png"));
+	allActions[LC_VIEW_SPLIT_VERTICAL]->setIcon(QIcon(":/resources/view_split_vertical.png"));
+	allActions[LC_VIEW_ZOOM_IN]->setIcon(QIcon(":/resources/view_zoomin.png"));
+	allActions[LC_VIEW_ZOOM_OUT]->setIcon(QIcon(":/resources/view_zoomout.png"));
+	allActions[LC_VIEW_ZOOM_EXTENTS]->setIcon(QIcon(":/resources/view_zoomextents.png"));
+	allActions[LC_VIEW_TIME_FIRST]->setIcon(QIcon(":/resources/time_first.png"));
+	allActions[LC_VIEW_TIME_PREVIOUS]->setIcon(QIcon(":/resources/time_previous.png"));
+	allActions[LC_VIEW_TIME_NEXT]->setIcon(QIcon(":/resources/time_next.png"));
+	allActions[LC_VIEW_TIME_LAST]->setIcon(QIcon(":/resources/time_last.png"));
+	allActions[LC_VIEW_TIME_ADD_KEYS]->setIcon(QIcon(":/resources/time_add_keys.png"));
+	allActions[LC_HELP_HOMEPAGE]->setIcon(QIcon(":/resources/help_homepage.png"));
 
-	mActions[LC_EDIT_SNAP_MOVE_TOGGLE]->setCheckable(true);
-	mActions[LC_EDIT_SNAP_ANGLE_TOGGLE]->setCheckable(true);
-	mActions[LC_VIEW_CAMERA_NONE]->setCheckable(true);
-	mActions[LC_VIEW_TIME_ADD_KEYS]->setCheckable(true);
+	allActions[LC_EDIT_SNAP_MOVE_TOGGLE]->setCheckable(true);
+	allActions[LC_EDIT_SNAP_ANGLE_TOGGLE]->setCheckable(true);
+	allActions[LC_VIEW_CAMERA_NONE]->setCheckable(true);
+	allActions[LC_VIEW_TIME_ADD_KEYS]->setCheckable(true);
 
 	for (int ActionIndex = LC_VIEW_TOOLBAR_FIRST; ActionIndex <= LC_VIEW_TOOLBAR_LAST; ActionIndex++)
-		mActions[ActionIndex]->setCheckable(true);
+		allActions[ActionIndex]->setCheckable(true);
 
 	QActionGroup* ActionRelativeGroup = new QActionGroup(this);
 	for (int ActionIdx = LC_EDIT_TRANSFORM_RELATIVE; ActionIdx <= LC_EDIT_TRANSFORM_ABSOLUTE; ActionIdx++)
 	{
-		mActions[ActionIdx]->setCheckable(true);
-		ActionRelativeGroup->addAction(mActions[ActionIdx]);
+		allActions[ActionIdx]->setCheckable(true);
+		allActions[ActionIdx]->setActionGroup(ActionRelativeGroup);
 	}
+
+	std::cout << this->actions().size() << "\n";
 
 	QActionGroup* ActionSeparateGroup = new QActionGroup(this);
 	for (int ActionIdx = LC_EDIT_TRANSFORM_SEPARATELY; ActionIdx <= LC_EDIT_TRANSFORM_TOGETHER; ActionIdx++)
 	{
-		mActions[ActionIdx]->setCheckable(true);
-		ActionSeparateGroup->addAction(mActions[ActionIdx]);
+		allActions[ActionIdx]->setCheckable(true);
+		allActions[ActionIdx]->setActionGroup(ActionSeparateGroup);
 	}
 
 	QActionGroup* ActionSnapXYGroup = new QActionGroup(this);
 	for (int ActionIdx = LC_EDIT_SNAP_MOVE_XY0; ActionIdx <= LC_EDIT_SNAP_MOVE_XY9; ActionIdx++)
 	{
-		mActions[ActionIdx]->setCheckable(true);
-		ActionSnapXYGroup->addAction(mActions[ActionIdx]);
+		allActions[ActionIdx]->setCheckable(true);
+		allActions[ActionIdx]->setActionGroup(ActionSnapXYGroup);
 	}
 
 	QActionGroup* ActionSnapZGroup = new QActionGroup(this);
 	for (int ActionIdx = LC_EDIT_SNAP_MOVE_Z0; ActionIdx <= LC_EDIT_SNAP_MOVE_Z9; ActionIdx++)
 	{
-		mActions[ActionIdx]->setCheckable(true);
-		ActionSnapZGroup->addAction(mActions[ActionIdx]);
+		allActions[ActionIdx]->setCheckable(true);
+		allActions[ActionIdx]->setActionGroup(ActionSnapZGroup);
 	}
 
 	QActionGroup* ActionSnapAngleGroup = new QActionGroup(this);
 	for (int ActionIdx = LC_EDIT_SNAP_ANGLE0; ActionIdx <= LC_EDIT_SNAP_ANGLE9; ActionIdx++)
 	{
-		mActions[ActionIdx]->setCheckable(true);
-		ActionSnapAngleGroup->addAction(mActions[ActionIdx]);
+		allActions[ActionIdx]->setCheckable(true);
+		allActions[ActionIdx]->setActionGroup(ActionSnapAngleGroup);
 	}
 
 	QActionGroup* ActionTransformTypeGroup = new QActionGroup(this);
 	for (int ActionIdx = LC_EDIT_TRANSFORM_ABSOLUTE_TRANSLATION; ActionIdx <= LC_EDIT_TRANSFORM_RELATIVE_ROTATION; ActionIdx++)
 	{
-		mActions[ActionIdx]->setCheckable(true);
-		ActionTransformTypeGroup->addAction(mActions[ActionIdx]);
+		allActions[ActionIdx]->setCheckable(true);
+		allActions[ActionIdx]->setActionGroup(ActionTransformTypeGroup);
 	}
 
 	QActionGroup* ActionToolGroup = new QActionGroup(this);
 	for (int ActionIdx = LC_EDIT_ACTION_FIRST; ActionIdx <= LC_EDIT_ACTION_LAST; ActionIdx++)
 	{
-		mActions[ActionIdx]->setCheckable(true);
-		ActionToolGroup->addAction(mActions[ActionIdx]);
+		allActions[ActionIdx]->setCheckable(true);
+		allActions[ActionIdx]->setActionGroup(ActionToolGroup);
 	}
 
 	QActionGroup* ActionCameraGroup = new QActionGroup(this);
-	ActionCameraGroup->addAction(mActions[LC_VIEW_CAMERA_NONE]);
+	allActions[LC_VIEW_CAMERA_NONE]->setActionGroup(ActionCameraGroup);
 	for (int ActionIdx = LC_VIEW_CAMERA_FIRST; ActionIdx <= LC_VIEW_CAMERA_LAST; ActionIdx++)
 	{
-		mActions[ActionIdx]->setCheckable(true);
-		ActionCameraGroup->addAction(mActions[ActionIdx]);
+		allActions[ActionIdx]->setCheckable(true);
+		allActions[ActionIdx]->setActionGroup(ActionCameraGroup);
 	}
 
 	QActionGroup* ActionPerspectiveGroup = new QActionGroup(this);
 	for (int ActionIdx = LC_VIEW_PROJECTION_FIRST; ActionIdx <= LC_VIEW_PROJECTION_LAST; ActionIdx++)
 	{
-		mActions[ActionIdx]->setCheckable(true);
-		ActionPerspectiveGroup->addAction(mActions[ActionIdx]);
+		allActions[ActionIdx]->setCheckable(true);
+		allActions[ActionIdx]->setActionGroup(ActionPerspectiveGroup);
 	}
 
 	QActionGroup* ActionShadingGroup = new QActionGroup(this);
 	for (int ActionIdx = LC_VIEW_SHADING_FIRST; ActionIdx <= LC_VIEW_SHADING_LAST; ActionIdx++)
 	{
-		mActions[ActionIdx]->setCheckable(true);
-		ActionShadingGroup->addAction(mActions[ActionIdx]);
+		allActions[ActionIdx]->setCheckable(true);
+		allActions[ActionIdx]->setActionGroup(ActionShadingGroup);
 	}
 
 	QActionGroup* SelectionModeGroup = new QActionGroup(this);
 	for (int ActionIdx = LC_EDIT_SELECTION_MODE_FIRST; ActionIdx <= LC_EDIT_SELECTION_MODE_LAST; ActionIdx++)
 	{
-		mActions[ActionIdx]->setCheckable(true);
-		SelectionModeGroup->addAction(mActions[ActionIdx]);
+		allActions[ActionIdx]->setCheckable(true);
+		allActions[ActionIdx]->setActionGroup(SelectionModeGroup);
 	}
 
 	QActionGroup* ModelGroup = new QActionGroup(this);
 	for (int ActionIdx = LC_MODEL_FIRST; ActionIdx <= LC_MODEL_LAST; ActionIdx++)
 	{
-		mActions[ActionIdx]->setCheckable(true);
-		ModelGroup->addAction(mActions[ActionIdx]);
+		allActions[ActionIdx]->setCheckable(true);
+		allActions[ActionIdx]->setActionGroup(ModelGroup);
 	}
 
 	UpdateShortcuts();
@@ -552,32 +566,38 @@ void lcMainWindow::CreateMenus()
 	ToolBarsMenu->addAction(mActions[LC_VIEW_TOOLBAR_TIME]);
 	ViewMenu->addAction(mActions[LC_VIEW_FULLSCREEN]);
 
+	
+	QList<QAction*> allActions = this->actions();
+	
 	QMenu* PieceMenu = menuBar()->addMenu(tr("&Piece"));
-	PieceMenu->addAction(mActions[LC_PIECE_INSERT]);
-	PieceMenu->addAction(mActions[LC_PIECE_DELETE]);
-	PieceMenu->addAction(mActions[LC_PIECE_DUPLICATE]);
-	PieceMenu->addAction(mActions[LC_PIECE_PAINT_SELECTED]);
-	PieceMenu->addAction(mActions[LC_PIECE_ARRAY]);
-	PieceMenu->addAction(mActions[LC_PIECE_MINIFIG_WIZARD]);
-	PieceMenu->addAction(mActions[LC_PIECE_RESET_PIVOT_POINT]);
-	PieceMenu->addAction(mActions[LC_PIECE_REMOVE_KEY_FRAMES]);
+
+	
+	
+	PieceMenu->addAction(allActions[LC_PIECE_INSERT]);
+	PieceMenu->addAction(allActions[LC_PIECE_DELETE]);
+	PieceMenu->addAction(allActions[LC_PIECE_DUPLICATE]);
+	PieceMenu->addAction(allActions[LC_PIECE_PAINT_SELECTED]);
+	PieceMenu->addAction(allActions[LC_PIECE_ARRAY]);
+	PieceMenu->addAction(allActions[LC_PIECE_MINIFIG_WIZARD]);
+	PieceMenu->addAction(allActions[LC_PIECE_RESET_PIVOT_POINT]);
+	PieceMenu->addAction(allActions[LC_PIECE_REMOVE_KEY_FRAMES]);
 	PieceMenu->addSeparator();
-	PieceMenu->addAction(mActions[LC_PIECE_EDIT_SELECTED_SUBMODEL]);
-	PieceMenu->addAction(mActions[LC_PIECE_EDIT_END_SUBMODEL]);
-	PieceMenu->addAction(mActions[LC_PIECE_VIEW_SELECTED_MODEL]);
-	PieceMenu->addAction(mActions[LC_PIECE_INLINE_SELECTED_MODELS]);
-	PieceMenu->addAction(mActions[LC_PIECE_MOVE_SELECTION_TO_MODEL]);
+	PieceMenu->addAction(allActions[LC_PIECE_EDIT_SELECTED_SUBMODEL]);
+	PieceMenu->addAction(allActions[LC_PIECE_EDIT_END_SUBMODEL]);
+	PieceMenu->addAction(allActions[LC_PIECE_VIEW_SELECTED_MODEL]);
+	PieceMenu->addAction(allActions[LC_PIECE_INLINE_SELECTED_MODELS]);
+	PieceMenu->addAction(allActions[LC_PIECE_MOVE_SELECTION_TO_MODEL]);
 	PieceMenu->addSeparator();
-	PieceMenu->addAction(mActions[LC_PIECE_GROUP]);
-	PieceMenu->addAction(mActions[LC_PIECE_UNGROUP]);
-	PieceMenu->addAction(mActions[LC_PIECE_GROUP_REMOVE]);
-	PieceMenu->addAction(mActions[LC_PIECE_GROUP_ADD]);
-	PieceMenu->addAction(mActions[LC_PIECE_GROUP_EDIT]);
+	PieceMenu->addAction(allActions[LC_PIECE_GROUP]);
+	PieceMenu->addAction(allActions[LC_PIECE_UNGROUP]);
+	PieceMenu->addAction(allActions[LC_PIECE_GROUP_REMOVE]);
+	PieceMenu->addAction(allActions[LC_PIECE_GROUP_ADD]);
+	PieceMenu->addAction(allActions[LC_PIECE_GROUP_EDIT]);
 	PieceMenu->addSeparator();
-	PieceMenu->addAction(mActions[LC_PIECE_HIDE_SELECTED]);
-	PieceMenu->addAction(mActions[LC_PIECE_HIDE_UNSELECTED]);
-	PieceMenu->addAction(mActions[LC_PIECE_UNHIDE_SELECTED]);
-	PieceMenu->addAction(mActions[LC_PIECE_UNHIDE_ALL]);
+	PieceMenu->addAction(allActions[LC_PIECE_HIDE_SELECTED]);
+	PieceMenu->addAction(allActions[LC_PIECE_HIDE_UNSELECTED]);
+	PieceMenu->addAction(allActions[LC_PIECE_UNHIDE_SELECTED]);
+	PieceMenu->addAction(allActions[LC_PIECE_UNHIDE_ALL]);
 
 	QMenu* ModelMenu = menuBar()->addMenu(tr("Sub&model"));
 	ModelMenu->addAction(mActions[LC_MODEL_PROPERTIES]);
@@ -1094,7 +1114,13 @@ void lcMainWindow::ClipboardChanged()
 
 void lcMainWindow::ActionTriggered()
 {
-	QObject* Action = sender();
+	//QObject* Action = sender();
+
+	QAction *action = qobject_cast<QAction*>(sender());
+
+	HandleCommand((lcCommandId)action->data().toInt());
+
+	/*int idx = action->data().toInt();
 
 	for (int CommandIdx = 0; CommandIdx < LC_NUM_COMMANDS; CommandIdx++)
 	{
@@ -1103,7 +1129,7 @@ void lcMainWindow::ActionTriggered()
 			HandleCommand((lcCommandId)CommandIdx);
 			break;
 		}
-	}
+	}*/
 }
 
 void lcMainWindow::ColorChanged(int ColorIndex)

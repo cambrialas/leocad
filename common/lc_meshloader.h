@@ -3,8 +3,13 @@
 #include "lc_math.h"
 #include "lc_mesh.h"
 
+#include <unordered_map>
+#include <tuple>
+
 class lcLibraryMeshData;
 class lcMeshLoader;
+
+
 
 enum lcMeshDataType
 {
@@ -93,6 +98,29 @@ struct lcMeshLoaderTextureMap
 	bool Next = false;
 };
 
+
+struct GridKey {
+    int32_t ix, iy, iz;
+
+    // Remove the = default line and write it explicitly:
+    bool operator==(const GridKey& o) const {
+        return ix == o.ix && iy == o.iy && iz == o.iz;
+    }
+};
+
+
+namespace std {
+    template<> struct hash<GridKey> {
+        size_t operator()(const GridKey& k) const noexcept {
+            size_t h = std::hash<int32_t>{}(k.ix);
+            h = h * 31 + std::hash<int32_t>{}(k.iy);
+            h = h * 31 + std::hash<int32_t>{}(k.iz);
+            return h;
+        }
+    };
+}
+
+
 class lcMeshLoaderTypeData
 {
 public:
@@ -111,6 +139,7 @@ public:
 		mSections.clear();
 		mVertices.clear();
 		mConditionalVertices.clear();
+		spatialMap.clear();
 	}
 
 	void SetMeshData(lcLibraryMeshData* MeshData)
@@ -132,10 +161,12 @@ public:
 	std::vector<std::unique_ptr<lcMeshLoaderSection>> mSections;
 	std::vector<lcMeshLoaderVertex> mVertices;
 	std::vector<lcMeshLoaderConditionalVertex> mConditionalVertices;
+	std::unordered_map<GridKey, uint32_t> spatialMap;
 
 protected:
 	lcLibraryMeshData* mMeshData = nullptr;
 };
+
 
 class lcLibraryMeshData
 {
